@@ -25,6 +25,7 @@ const (
 	bindingPackage     = protogen.GoImportPath("github.com/gin-gonic/gin/binding")
 	bindingutilPackage = protogen.GoImportPath("github.com/go-kenka/ginpb/binding")
 	metadataPackage    = protogen.GoImportPath("github.com/go-kenka/ginpb/metadata")
+	middlewarePackage  = protogen.GoImportPath("github.com/go-kenka/ginpb/middleware")
 	clientPackage      = protogen.GoImportPath("github.com/go-kenka/ginpb/client")
 	fmtPackage         = protogen.GoImportPath("fmt")
 	stringsPackage     = protogen.GoImportPath("strings")
@@ -49,9 +50,28 @@ func Register{{.ServiceType}}HTTPServer(r gin.IRouter, srv {{.ServiceType}}HTTPS
 	{{- end}}
 }
 
+func Register{{.ServiceType}}HTTPServerWithMiddleware(r gin.IRouter, srv {{.ServiceType}}HTTPServer, middlewares ...gin.HandlerFunc) {
+	{{- range .Methods}}
+	r.{{.Method}}("{{.Path}}", append(middlewares, _{{$svrType}}_{{.Name}}{{.Num}}_HTTP_Handler(srv))...)
+	{{- end}}
+}
+
+func Register{{.ServiceType}}HTTPServerWithOperationMiddleware(r gin.IRouter, srv {{.ServiceType}}HTTPServer, middlewares map[string][]gin.HandlerFunc) {
+	{{- range .Methods}}
+	if mws, exists := middlewares[Operation{{$svrType}}{{.OriginalName}}]; exists {
+		r.{{.Method}}("{{.Path}}", append(mws, _{{$svrType}}_{{.Name}}{{.Num}}_HTTP_Handler(srv))...)
+	} else {
+		r.{{.Method}}("{{.Path}}", _{{$svrType}}_{{.Name}}{{.Num}}_HTTP_Handler(srv))
+	}
+	{{- end}}
+}
+
 {{range .Methods}}
 func _{{$svrType}}_{{.Name}}{{.Num}}_HTTP_Handler(srv {{$svrType}}HTTPServer) func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
+		// Set operation for middleware
+		ctx.Set("operation", Operation{{$svrType}}{{.OriginalName}})
+		
 		{{if .Fields}}var ginReq {{.Name | lower}}GinRequest{{else}}var in {{.Request}}{{end}}
 		{{- if .HasBody}}
 		// body binding with automatic Content-Type detection
@@ -224,6 +244,7 @@ func generateFileContent(gen *protogen.Plugin, file *protogen.File, g *protogen.
 	g.P("var _ = new(", clientPackage.Ident("Client"), ")")
 	g.P("var _ = ", bindingPackage.Ident("JSON"))
 	g.P("var _ = ", bindingutilPackage.Ident("BindByContentType"))
+	g.P("var _ = ", middlewarePackage.Ident("Chain"))
 	g.P("var _ = ", fmtPackage.Ident("Sprintf"))
 	g.P("var _ = ", stringsPackage.Ident("ReplaceAll"))
 	g.P()
