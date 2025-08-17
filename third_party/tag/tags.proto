@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package tag;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/go-kenka/ginpb/tag;tag";
+
+// FieldTags defines custom Go struct tags for gin framework
+message FieldTags {
+  // form tag for query parameters and form data binding
+  optional string form = 1;
+  
+  // uri tag for path parameters binding
+  optional string uri = 2;
+  
+  // json tag for JSON binding (usually auto-generated from field name)
+  optional string json = 3;
+  
+  // header tag for HTTP header binding
+  optional string header = 4;
+  
+  // binding tag for validation rules (e.g., "required", "min=1")
+  optional string binding = 5;
+  
+  // validate tag for protoc-gen-validate compatibility
+  optional string validate = 6;
+  
+  // custom tag for any other custom tags
+  optional string custom = 7;
+}
+
+// Extension for field-level tags
+extend google.protobuf.FieldOptions {
+  optional FieldTags tags = 50001;
+}
+
+// Quick binding options for common cases
+extend google.protobuf.FieldOptions {
+  // Shortcut for form binding
+  optional string form_tag = 50002;
+  
+  // Shortcut for uri binding
+  optional string uri_tag = 50003;
+  
+  // Shortcut for header binding
+  optional string header_tag = 50004;
+  
+  // Shortcut for binding validation
+  optional string binding_tag = 50005;
+}

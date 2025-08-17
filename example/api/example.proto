@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+option go_package = "github.com/go-kenka/ginpb/example/api;api";
+
+package example;
+
+import "google/api/annotations.proto";
+import "tag/tags.proto";
+
+// blog service is a blog demo
+service BlogService {
+  rpc GetArticles(GetArticlesReq) returns (GetArticlesResp) {
+    option (google.api.http) = {
+      get : "/v1/articles"
+      additional_bindings {get : "/v1/author/{author_id}/articles"}
+    };
+  }
+
+  rpc CreateArticle(Article) returns (Article) {
+    option (google.api.http) = {
+      post : "/v1/author/{author_id}/articles",
+      body : "*"
+    };
+  }
+}
+
+message GetArticlesReq {
+  // Query parameter for article title search
+  string title = 1 [(tag.form_tag) = "title"];
+
+  // Query parameter for pagination
+  int32 page = 2 [(tag.form_tag) = "page"];
+
+  // Query parameter for page size with validation
+  int32 page_size = 3 [(tag.tags) = { form: "page_size", binding: "required" }];
+
+  // Can be both query param and URI param  
+  int32 author_id = 4 [(tag.tags) = { form: "author_id", uri: "author_id" }];
+}
+
+message GetArticlesResp {
+  int64 total = 1;
+  repeated Article articles = 2;
+}
+
+message Article {
+  // Article title for JSON binding
+  string title = 1;
+  
+  // Article content for JSON binding  
+  string content = 2;
+  
+  // Author ID that can be from URI or form
+  int32 author_id = 3 [(tag.tags) = { form: "author_id", uri: "author_id" }];
+}
