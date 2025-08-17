@@ -10,6 +10,7 @@ init:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 	go install github.com/google/gnostic/cmd/protoc-gen-openapi@latest
+	go install github.com/go-kenka/ginpb/cmd/protoc-gen-gin@latest
 	go install github.com/envoyproxy/protoc-gen-validate@latest
 
 .PHONY: api
@@ -18,7 +19,7 @@ api:
 	protoc --proto_path=./example/api \
 	       --proto_path=./third_party \
  	       --go_out=paths=source_relative:./example/api \
- 	       --go-gin_out=paths=source_relative:./example/api \
+ 	       --gin_out=paths=source_relative:./example/api \
  	       --openapi_out==paths=source_relative:. --openapi_opt=enum_type=string\
  	       --validate_out=paths=source_relative,lang=go:./example/api \
 		   $(API_PROTO_FILES) \

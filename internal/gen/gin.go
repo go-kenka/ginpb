@@ -20,12 +20,14 @@ import (
 )
 
 const (
-	contextPackage  = protogen.GoImportPath("context")
-	ginPackage      = protogen.GoImportPath("github.com/gin-gonic/gin")
-	metadataPackage = protogen.GoImportPath("github.com/go-kenka/ginpb/metadata")
-	clientPackage   = protogen.GoImportPath("github.com/go-kenka/ginpb/client")
-	fmtPackage      = protogen.GoImportPath("fmt")
-	stringsPackage  = protogen.GoImportPath("strings")
+	contextPackage     = protogen.GoImportPath("context")
+	ginPackage         = protogen.GoImportPath("github.com/gin-gonic/gin")
+	bindingPackage     = protogen.GoImportPath("github.com/gin-gonic/gin/binding")
+	bindingutilPackage = protogen.GoImportPath("github.com/go-kenka/ginpb/binding")
+	metadataPackage    = protogen.GoImportPath("github.com/go-kenka/ginpb/metadata")
+	clientPackage      = protogen.GoImportPath("github.com/go-kenka/ginpb/client")
+	fmtPackage         = protogen.GoImportPath("fmt")
+	stringsPackage     = protogen.GoImportPath("strings")
 )
 
 var serverTemplate = `{{$svrType := .ServiceType}}
@@ -50,44 +52,55 @@ func Register{{.ServiceType}}HTTPServer(r gin.IRouter, srv {{.ServiceType}}HTTPS
 {{range .Methods}}
 func _{{$svrType}}_{{.Name}}{{.Num}}_HTTP_Handler(srv {{$svrType}}HTTPServer) func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		var in {{.Request}}
+		{{if .Fields}}var ginReq {{.Name | lower}}GinRequest{{else}}var in {{.Request}}{{end}}
 		{{- if .HasBody}}
-		// body
-		if err := ctx.BindJSON(&in); err != nil {
+		// body binding with automatic Content-Type detection
+		{{if .Fields}}if err := binding1.BindByContentType(ctx, &ginReq); err != nil {
+		{{else}}if err := binding1.BindByContentType(ctx, &in); err != nil {
+		{{- end}}
 			ctx.Error(err)
 			return
 		}
 		
 		{{- if not (eq .Body "")}}
 		// query
-		if err := ctx.BindQuery(&in); err != nil {
+		{{if .Fields}}if err := ctx.BindQuery(&ginReq); err != nil {
+		{{else}}if err := ctx.BindQuery(&in); err != nil {
+		{{- end}}
 			ctx.Error(err)
 			return
 		}
 		{{- end}}
 		{{- else}}
 		// query
-		if err := ctx.BindQuery(&in); err != nil {
+		{{if .Fields}}if err := ctx.BindQuery(&ginReq); err != nil {
+		{{else}}if err := ctx.BindQuery(&in); err != nil {
+		{{- end}}
 			ctx.Error(err)
 			return
 		}
 		{{- end}}
 		{{- if .HasParams}}
 		// params
-		if err := ctx.BindUri(&in); err != nil {
+		{{if .Fields}}if err := ctx.BindUri(&ginReq); err != nil {
+		{{else}}if err := ctx.BindUri(&in); err != nil {
+		{{- end}}
 			ctx.Error(err)
 			return
 		}
 		{{- end}}
 		{{if .Fields}}
+		// Convert gin request to protobuf request
+		in := ginReq.to{{.Name}}Request()
+		
 		// Custom field tags detected:
 		{{range .Fields}}
 		// Field {{.GoName}}: {{range $key, $value := .Tags}}{{$key}}:"{{$value}}" {{end}}
-		{{end}}
-		{{end}}
+		{{- end}}
+		{{- end}}
 		// header,ip等常用信息, form表单信息,包括上传文件
 		newCtx := metadata.NewContext(ctx)
-		reply, err := srv.{{.Name}}(newCtx, &in)
+		{{if .Fields}}reply, err := srv.{{.Name}}(newCtx, in){{else}}reply, err := srv.{{.Name}}(newCtx, &in){{end}}
 		if err != nil {
 			ctx.Error(err)
 			return
@@ -146,16 +159,28 @@ func (c *{{$svrType}}HTTPClientImpl) {{.Name}}(ctx context.Context, in *{{.Reque
 }
 {{end}}`
 
-var tagsStructTemplate = `// This file contains gin-friendly struct definitions generated from protobuf
-// Use these structs for gin binding instead of the original protobuf structs
-
+var tagsStructTemplate = `// Internal structs with gin binding tags for protobuf messages
 {{$svrType := .ServiceType}}
 {{range .MethodSets}}
 {{if .Fields}}
-// {{.Name}}Request provides gin binding tags for {{.Request}}
-type {{.Name}}Request struct {
-{{range .Fields}}	{{.GoName}} string {{formatTags .Tags}}
+// {{.Name | lower}}GinRequest provides gin binding tags for {{.Request}}
+type {{.Name | lower}}GinRequest struct {
+{{range .Fields}}	{{.GoName}} {{.GoType}} {{formatTags .Tags}}
 {{end}}}
+
+// convert{{.Name}}GinRequest converts from gin request struct to protobuf struct
+func (r *{{.Name | lower}}GinRequest) to{{.Name}}Request() *{{.Request}} {
+	return &{{.Request}}{
+{{range .Fields}}		{{.GoName}}: r.{{.GoName}},
+{{end}}	}
+}
+
+// from{{.Name}}Request converts from protobuf struct to gin request struct  
+func from{{.Name}}Request(req *{{.Request}}) *{{.Name | lower}}GinRequest {
+	return &{{.Name | lower}}GinRequest{
+{{range .Fields}}		{{.GoName}}: req.{{.GoName}},
+{{end}}	}
+}
 {{end}}
 {{end}}`
 
@@ -165,10 +190,6 @@ var methodSets = make(map[string]int)
 
 // GenerateFile generates a .pb.gin.go file using resty-based client
 func GenerateFile(gen *protogen.Plugin, file *protogen.File, omitempty bool) *protogen.GeneratedFile {
-	if debugFile, err := os.OpenFile("/tmp/gin-debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		debugFile.WriteString(fmt.Sprintf("[DEBUG] GenerateFile called for: %s\n", file.Desc.Path()))
-		debugFile.Close()
-	}
 	if len(file.Services) == 0 || (omitempty && !hasHTTPRule(file.Services)) {
 		return nil
 	}
@@ -201,6 +222,8 @@ func generateFileContent(gen *protogen.Plugin, file *protogen.File, g *protogen.
 	g.P("var _ = new(", metadataPackage.Ident("GinData"), ")")
 	g.P("var _ = new(", ginPackage.Ident("H"), ")")
 	g.P("var _ = new(", clientPackage.Ident("Client"), ")")
+	g.P("var _ = ", bindingPackage.Ident("JSON"))
+	g.P("var _ = ", bindingutilPackage.Ident("BindByContentType"))
 	g.P("var _ = ", fmtPackage.Ident("Sprintf"))
 	g.P("var _ = ", stringsPackage.Ident("ReplaceAll"))
 	g.P()
@@ -368,9 +391,6 @@ func parseFieldTags(field *protogen.Field) map[string]string {
 
 	opts := field.Desc.Options().(*descriptorpb.FieldOptions)
 
-	// Debug: print field name being processed
-	fmt.Fprintf(os.Stderr, "[DEBUG] Processing field: %s\n", field.Desc.Name())
-
 	// Parse structured tags
 	if fieldTags, ok := proto.GetExtension(opts, ginext.E_Tags).(*ginext.FieldTags); ok && fieldTags != nil {
 		if form := fieldTags.GetForm(); form != "" {
@@ -390,6 +410,24 @@ func parseFieldTags(field *protogen.Field) map[string]string {
 		}
 		if validate := fieldTags.GetValidate(); validate != "" {
 			tags["validate"] = validate
+		}
+		if xml := fieldTags.GetXml(); xml != "" {
+			tags["xml"] = xml
+		}
+		if yaml := fieldTags.GetYaml(); yaml != "" {
+			tags["yaml"] = yaml
+		}
+		if toml := fieldTags.GetToml(); toml != "" {
+			tags["toml"] = toml
+		}
+		if protobuf := fieldTags.GetProtobuf(); protobuf != "" {
+			tags["protobuf"] = protobuf
+		}
+		if msgpack := fieldTags.GetMsgpack(); msgpack != "" {
+			tags["msgpack"] = msgpack
+		}
+		if multipart := fieldTags.GetMultipart(); multipart != "" {
+			tags["multipart"] = multipart
 		}
 		if custom := fieldTags.GetCustom(); custom != "" {
 			// Parse custom tags in format "key1:value1,key2:value2"
@@ -415,6 +453,24 @@ func parseFieldTags(field *protogen.Field) map[string]string {
 	if bindingTag, ok := proto.GetExtension(opts, ginext.E_BindingTag).(string); ok && bindingTag != "" {
 		tags["binding"] = bindingTag
 	}
+	if xmlTag, ok := proto.GetExtension(opts, ginext.E_XmlTag).(string); ok && xmlTag != "" {
+		tags["xml"] = xmlTag
+	}
+	if yamlTag, ok := proto.GetExtension(opts, ginext.E_YamlTag).(string); ok && yamlTag != "" {
+		tags["yaml"] = yamlTag
+	}
+	if tomlTag, ok := proto.GetExtension(opts, ginext.E_TomlTag).(string); ok && tomlTag != "" {
+		tags["toml"] = tomlTag
+	}
+	if protobufTag, ok := proto.GetExtension(opts, ginext.E_ProtobufTag).(string); ok && protobufTag != "" {
+		tags["protobuf"] = protobufTag
+	}
+	if msgpackTag, ok := proto.GetExtension(opts, ginext.E_MsgpackTag).(string); ok && msgpackTag != "" {
+		tags["msgpack"] = msgpackTag
+	}
+	if multipartTag, ok := proto.GetExtension(opts, ginext.E_MultipartTag).(string); ok && multipartTag != "" {
+		tags["multipart"] = multipartTag
+	}
 
 	// Auto-generate json tag if not explicitly set
 	if _, hasJson := tags["json"]; !hasJson {
@@ -424,19 +480,113 @@ func parseFieldTags(field *protogen.Field) map[string]string {
 	return tags
 }
 
+// getGoType converts protobuf field type to Go type string
+func getGoType(field *protogen.Field) string {
+	// Handle repeated fields (arrays/slices)
+	if field.Desc.IsList() {
+		elementType := getScalarGoType(field)
+		return "[]" + elementType
+	}
+
+	// Handle map fields
+	if field.Desc.IsMap() {
+		keyType := getMapKeyType(field.Desc.MapKey())
+		valueType := getMapValueType(field.Desc.MapValue())
+		return fmt.Sprintf("map[%s]%s", keyType, valueType)
+	}
+
+	return getScalarGoType(field)
+}
+
+// getScalarGoType gets the Go type for scalar protobuf types
+func getScalarGoType(field *protogen.Field) string {
+	switch field.Desc.Kind() {
+	case protoreflect.BoolKind:
+		return "bool"
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind:
+		return "int32"
+	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
+		return "uint32"
+	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
+		return "int64"
+	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
+		return "uint64"
+	case protoreflect.FloatKind:
+		return "float32"
+	case protoreflect.DoubleKind:
+		return "float64"
+	case protoreflect.StringKind:
+		return "string"
+	case protoreflect.BytesKind:
+		return "[]byte"
+	case protoreflect.EnumKind:
+		return "int32" // Enums are typically int32 in Go
+	case protoreflect.MessageKind:
+		// For message types, we'll use the full Go type name
+		return "*" + field.Message.GoIdent.GoName
+	default:
+		return "interface{}" // fallback
+	}
+}
+
+// getMapKeyType returns the Go type for map keys
+func getMapKeyType(keyField protoreflect.FieldDescriptor) string {
+	switch keyField.Kind() {
+	case protoreflect.StringKind:
+		return "string"
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind:
+		return "int32"
+	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
+		return "int64"
+	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
+		return "uint32"
+	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
+		return "uint64"
+	default:
+		return "string" // fallback to string
+	}
+}
+
+// getMapValueType returns the Go type for map values
+func getMapValueType(valueField protoreflect.FieldDescriptor) string {
+	switch valueField.Kind() {
+	case protoreflect.BoolKind:
+		return "bool"
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind:
+		return "int32"
+	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
+		return "uint32"
+	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
+		return "int64"
+	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
+		return "uint64"
+	case protoreflect.FloatKind:
+		return "float32"
+	case protoreflect.DoubleKind:
+		return "float64"
+	case protoreflect.StringKind:
+		return "string"
+	case protoreflect.BytesKind:
+		return "[]byte"
+	case protoreflect.EnumKind:
+		return "int32"
+	case protoreflect.MessageKind:
+		// For message types in maps, we don't use pointers
+		return string(valueField.Message().Name())
+	default:
+		return "interface{}" // fallback
+	}
+}
+
 // parseMessageFields recursively parses message fields and extracts tag information
 func parseMessageFields(message *protogen.Message) []*fieldInfo {
 	var fields []*fieldInfo
-
-	if debugFile, err := os.OpenFile("/tmp/gin-debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		debugFile.WriteString(fmt.Sprintf("[DEBUG] Parsing message: %s with %d fields\n", message.GoIdent.GoName, len(message.Fields)))
-		debugFile.Close()
-	}
 
 	for _, field := range message.Fields {
 		fieldInfo := &fieldInfo{
 			Name:     string(field.Desc.Name()),
 			GoName:   field.GoName,
+			GoType:   getGoType(field),
 			JsonName: field.Desc.JSONName(),
 			Tags:     parseFieldTags(field),
 		}
@@ -455,8 +605,8 @@ func formatStructTags(tags map[string]string) string {
 	}
 
 	var parts []string
-	// Order tags consistently: json, form, uri, header, binding, validate, custom
-	tagOrder := []string{"json", "form", "uri", "header", "binding", "validate"}
+	// Order tags consistently: json, xml, yaml, toml, form, uri, header, protobuf, msgpack, multipart, binding, validate, custom
+	tagOrder := []string{"json", "xml", "yaml", "toml", "form", "uri", "header", "protobuf", "msgpack", "multipart", "binding", "validate"}
 
 	for _, key := range tagOrder {
 		if value, ok := tags[key]; ok {
@@ -642,6 +792,7 @@ type serviceDesc struct {
 type fieldInfo struct {
 	Name     string
 	GoName   string
+	GoType   string
 	JsonName string
 	Tags     map[string]string // tag name -> tag value
 }
@@ -681,6 +832,7 @@ func (s *serviceDesc) execute() string {
 		"formatTags": formatStructTags,
 		"hasTag":     hasTag,
 		"getTag":     getTag,
+		"lower":      strings.ToLower,
 	}).Parse(strings.TrimSpace(serverTemplate))
 	if err != nil {
 		panic(err)
@@ -699,6 +851,20 @@ func (s *serviceDesc) execute() string {
 		panic(err)
 	}
 	if err := clientTmpl.Execute(buf, s); err != nil {
+		panic(err)
+	}
+
+	buf.WriteString("\n\n")
+
+	// Generate tagged structs at the end
+	tagsTmpl, err := template.New("tags").Funcs(template.FuncMap{
+		"formatTags": formatStructTags,
+		"lower":      strings.ToLower,
+	}).Parse(strings.TrimSpace(tagsStructTemplate))
+	if err != nil {
+		panic(err)
+	}
+	if err := tagsTmpl.Execute(buf, s); err != nil {
 		panic(err)
 	}
 

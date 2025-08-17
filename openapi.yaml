@@ -3,10 +3,266 @@
 
 openapi: 3.0.3
 info:
-    title: BlogService API
-    description: blog service is a blog demo
+    title: ""
     version: 0.0.1
 paths:
+    /test/bindings/{pathParam}:
+        post:
+            tags:
+                - GinBindingTestService
+            description: 测试所有绑定类型的综合接口
+            operationId: GinBindingTestService_TestAllBindings
+            parameters:
+                - name: pathParam
+                  in: path
+                  description: Path参数测试
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AllBindingsRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AllBindingsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /test/form:
+        post:
+            tags:
+                - GinBindingTestService
+            description: 测试Form绑定
+            operationId: GinBindingTestService_TestFormBinding
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/FormBindingRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/FormBindingResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /test/header:
+        get:
+            tags:
+                - GinBindingTestService
+            description: 测试Header绑定
+            operationId: GinBindingTestService_TestHeaderBinding
+            parameters:
+                - name: accept
+                  in: query
+                  schema:
+                    type: string
+                - name: acceptLanguage
+                  in: query
+                  schema:
+                    type: string
+                - name: userAgent
+                  in: query
+                  schema:
+                    type: string
+                - name: xApiKey
+                  in: query
+                  schema:
+                    type: string
+                - name: xRequestId
+                  in: query
+                  schema:
+                    type: string
+                - name: xRateLimit
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/HeaderBindingResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /test/json:
+        post:
+            tags:
+                - GinBindingTestService
+            description: 测试JSON绑定
+            operationId: GinBindingTestService_TestJSONBinding
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/JSONBindingRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/JSONBindingResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /test/mixed/{resourceId}/action/{actionType}:
+        put:
+            tags:
+                - GinBindingTestService
+            description: 测试混合绑定（最复杂场景）
+            operationId: GinBindingTestService_TestMixedBinding
+            parameters:
+                - name: resourceId
+                  in: path
+                  description: URI参数
+                  required: true
+                  schema:
+                    type: string
+                - name: actionType
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/MixedBindingRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/MixedBindingResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /test/path/{id}/{name}:
+        get:
+            tags:
+                - GinBindingTestService
+            description: 测试Path参数绑定
+            operationId: GinBindingTestService_TestPathBinding
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: name
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PathBindingResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /test/query:
+        get:
+            tags:
+                - GinBindingTestService
+            description: 测试Query参数绑定
+            operationId: GinBindingTestService_TestQueryBinding
+            parameters:
+                - name: search
+                  in: query
+                  schema:
+                    type: string
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: categories
+                  in: query
+                  schema:
+                    type: array
+                    items:
+                        type: string
+                - name: includeDeleted
+                  in: query
+                  schema:
+                    type: boolean
+                - name: minPrice
+                  in: query
+                  schema:
+                    type: number
+                    format: double
+                - name: maxPrice
+                  in: query
+                  schema:
+                    type: number
+                    format: double
+                - name: startDate
+                  in: query
+                  description: 日期时间测试
+                  schema:
+                    type: string
+                - name: endDate
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/QueryBindingResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /v1/articles:
         get:
             tags:
@@ -125,6 +381,64 @@ paths:
                                 $ref: '#/components/schemas/Status'
 components:
     schemas:
+        AllBindingsRequest:
+            type: object
+            properties:
+                pathParam:
+                    type: string
+                    description: Path参数测试
+                queryParam:
+                    type: string
+                    description: Query参数测试
+                page:
+                    type: integer
+                    format: int32
+                limit:
+                    type: integer
+                    format: int32
+                userAgent:
+                    type: string
+                    description: Header测试
+                authorization:
+                    type: string
+                contentType:
+                    type: string
+                title:
+                    type: string
+                    description: JSON Body测试
+                description:
+                    type: string
+                price:
+                    type: number
+                    format: double
+                isActive:
+                    type: boolean
+                tags:
+                    type: array
+                    items:
+                        type: string
+                    description: 复杂类型测试
+                metadata:
+                    type: object
+                    additionalProperties:
+                        type: string
+                email:
+                    type: string
+                    description: 自定义验证
+                phone:
+                    type: string
+            description: 所有绑定类型的综合测试
+        AllBindingsResponse:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                message:
+                    type: string
+                receivedData:
+                    type: object
+                    additionalProperties:
+                        type: string
         Article:
             type: object
             properties:
@@ -138,6 +452,44 @@ components:
                     type: integer
                     description: Author ID that can be from URI or form
                     format: int32
+        FormBindingRequest:
+            type: object
+            properties:
+                username:
+                    type: string
+                password:
+                    type: string
+                confirmPassword:
+                    type: string
+                fileName:
+                    type: string
+                    description: 文件上传相关
+                fileSize:
+                    type: string
+                interests:
+                    type: array
+                    items:
+                        type: string
+                    description: 多选框
+                gender:
+                    type: string
+                    description: 单选框
+                experienceYears:
+                    type: integer
+                    description: 数字类型
+                    format: int32
+            description: Form绑定专项测试
+        FormBindingResponse:
+            type: object
+            properties:
+                registrationSuccess:
+                    type: boolean
+                userId:
+                    type: string
+                warnings:
+                    type: array
+                    items:
+                        type: string
         GetArticlesResp:
             type: object
             properties:
@@ -155,6 +507,129 @@ components:
                     description: The type of the serialized message.
             additionalProperties: true
             description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
+        HeaderBindingResponse:
+            type: object
+            properties:
+                headers:
+                    type: object
+                    additionalProperties:
+                        type: string
+                requestInfo:
+                    type: string
+        JSONBindingRequest:
+            type: object
+            properties:
+                name:
+                    type: string
+                    description: 基础类型
+                age:
+                    type: integer
+                    format: int32
+                salary:
+                    type: number
+                    format: double
+                isMarried:
+                    type: boolean
+                hobbies:
+                    type: array
+                    items:
+                        type: string
+                    description: 数组和对象
+                address:
+                    type: object
+                    additionalProperties:
+                        type: string
+                email:
+                    type: string
+                    description: 验证规则测试
+                website:
+                    type: string
+                mobile:
+                    type: string
+                customField:
+                    type: string
+                    description: 自定义tag测试
+            description: JSON绑定专项测试
+        JSONBindingResponse:
+            type: object
+            properties:
+                processedData:
+                    type: string
+                validationScore:
+                    type: integer
+                    format: int32
+        MixedBindingRequest:
+            type: object
+            properties:
+                resourceId:
+                    type: string
+                    description: URI参数
+                actionType:
+                    type: string
+                version:
+                    type: string
+                    description: Query参数
+                force:
+                    type: boolean
+                authorization:
+                    type: string
+                    description: Header参数
+                contentType:
+                    type: string
+                ifMatch:
+                    type: string
+                operationName:
+                    type: string
+                    description: JSON Body
+                parameters:
+                    type: object
+                    additionalProperties:
+                        type: string
+                affectedResources:
+                    type: array
+                    items:
+                        type: string
+                timestamp:
+                    type: string
+                    description: 时间戳
+                checksum:
+                    type: string
+                    description: 自定义验证
+            description: 混合绑定测试（最复杂场景）
+        MixedBindingResponse:
+            type: object
+            properties:
+                operationId:
+                    type: string
+                status:
+                    type: string
+                result:
+                    type: object
+                    additionalProperties:
+                        type: string
+                validationErrors:
+                    type: array
+                    items:
+                        type: string
+        PathBindingResponse:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                fullPath:
+                    type: string
+        QueryBindingResponse:
+            type: object
+            properties:
+                totalCount:
+                    type: integer
+                    format: int32
+                results:
+                    type: array
+                    items:
+                        type: string
         Status:
             type: object
             properties:
@@ -173,3 +648,6 @@ components:
             description: 'The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).'
 tags:
     - name: BlogService
+      description: blog service is a blog demo
+    - name: GinBindingTestService
+      description: 全面的Gin绑定测试服务

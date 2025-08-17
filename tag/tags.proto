@@ -26,8 +26,26 @@ message FieldTags {
   // validate tag for protoc-gen-validate compatibility
   optional string validate = 6;
   
+  // xml tag for XML binding
+  optional string xml = 7;
+  
+  // yaml tag for YAML binding
+  optional string yaml = 8;
+  
+  // toml tag for TOML binding
+  optional string toml = 9;
+  
+  // protobuf tag for ProtoBuf binding
+  optional string protobuf = 10;
+  
+  // msgpack tag for MsgPack binding
+  optional string msgpack = 11;
+  
+  // multipart tag for multipart form binding
+  optional string multipart = 12;
+  
   // custom tag for any other custom tags
-  optional string custom = 7;
+  optional string custom = 13;
 }
 
 // Extension for field-level tags
@@ -48,4 +66,22 @@ extend google.protobuf.FieldOptions {
   
   // Shortcut for binding validation
   optional string binding_tag = 50005;
+  
+  // Shortcut for xml binding
+  optional string xml_tag = 50006;
+  
+  // Shortcut for yaml binding
+  optional string yaml_tag = 50007;
+  
+  // Shortcut for toml binding
+  optional string toml_tag = 50008;
+  
+  // Shortcut for protobuf binding
+  optional string protobuf_tag = 50009;
+  
+  // Shortcut for msgpack binding
+  optional string msgpack_tag = 50010;
+  
+  // Shortcut for multipart binding
+  optional string multipart_tag = 50011;
 }
