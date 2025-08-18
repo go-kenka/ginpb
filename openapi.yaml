@@ -6,6 +6,682 @@ info:
     title: ""
     version: 0.0.1
 paths:
+    /api/v1/profiles/{userId}:
+        get:
+            tags:
+                - CompleteExampleService
+            description: 多种绑定路径 (Additional Bindings)
+            operationId: CompleteExampleService_GetUserProfile
+            parameters:
+                - name: userId
+                  in: path
+                  description: 路径参数 - 支持多种路径模式
+                  required: true
+                  schema:
+                    type: string
+                - name: sections
+                  in: query
+                  description: 查询参数 - 个人资料选项
+                  schema:
+                    type: array
+                    items:
+                        type: string
+                - name: includeStats
+                  in: query
+                  schema:
+                    type: boolean
+                - name: includePosts
+                  in: query
+                  schema:
+                    type: boolean
+                - name: includeFollowers
+                  in: query
+                  schema:
+                    type: boolean
+                - name: viewerContext
+                  in: query
+                  description: 隐私设置
+                  schema:
+                    type: string
+                - name: viewerId
+                  in: query
+                  description: Header参数 - 访问者信息
+                  schema:
+                    type: string
+                - name: accessToken
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetUserProfileResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users:
+        get:
+            tags:
+                - CompleteExampleService
+            description: 简单GET请求 - 查询参数
+            operationId: CompleteExampleService_ListUsers
+            parameters:
+                - name: page
+                  in: query
+                  description: 分页参数 - Form绑定 + 验证
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: sortBy
+                  in: query
+                  description: 排序参数 - 枚举验证
+                  schema:
+                    type: string
+                - name: sortOrder
+                  in: query
+                  schema:
+                    type: string
+                - name: status
+                  in: query
+                  description: 过滤参数 - 数组
+                  schema:
+                    type: array
+                    items:
+                        type: string
+                - name: roles
+                  in: query
+                  schema:
+                    type: array
+                    items:
+                        type: string
+                - name: includeDeleted
+                  in: query
+                  description: 布尔参数
+                  schema:
+                    type: boolean
+                - name: includeStats
+                  in: query
+                  schema:
+                    type: boolean
+                - name: createdAfter
+                  in: query
+                  description: 日期范围 - 日期格式验证
+                  schema:
+                    type: string
+                - name: createdBefore
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListUsersResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - CompleteExampleService
+            description: POST请求 - JSON Body
+            operationId: CompleteExampleService_CreateUser
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateUserRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CreateUserResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        delete:
+            tags:
+                - CompleteExampleService
+            description: DELETE请求 - 批量操作
+            operationId: CompleteExampleService_BatchDeleteUsers
+            parameters:
+                - name: userIds
+                  in: query
+                  description: 查询参数 - 批量删除
+                  schema:
+                    type: array
+                    items:
+                        type: string
+                - name: hardDelete
+                  in: query
+                  schema:
+                    type: boolean
+                - name: deleteReason
+                  in: query
+                  schema:
+                    type: string
+                - name: batchConfirmation
+                  in: query
+                  description: Header参数 - 批量操作安全确认
+                  schema:
+                    type: string
+                - name: authorization
+                  in: query
+                  schema:
+                    type: string
+                - name: operationId
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/BatchDeleteUsersResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/register:
+        post:
+            tags:
+                - CompleteExampleService
+            description: POST请求 - Form Body
+            operationId: CompleteExampleService_RegisterUser
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/RegisterUserRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/RegisterUserResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/search:
+        get:
+            tags:
+                - CompleteExampleService
+            description: GET请求 - 复杂查询 + Header参数
+            operationId: CompleteExampleService_SearchUsers
+            parameters:
+                - name: query
+                  in: query
+                  description: 查询参数 - 必需 + 长度验证
+                  schema:
+                    type: string
+                - name: searchFields
+                  in: query
+                  description: 搜索选项
+                  schema:
+                    type: array
+                    items:
+                        type: string
+                - name: limit
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: clientId
+                  in: query
+                  description: Header参数 - 客户端信息
+                  schema:
+                    type: string
+                - name: requestId
+                  in: query
+                  schema:
+                    type: string
+                - name: userAgent
+                  in: query
+                  schema:
+                    type: string
+                - name: apiKey
+                  in: query
+                  schema:
+                    type: string
+                - name: latitude
+                  in: query
+                  description: 地理位置过滤 - 数值范围验证
+                  schema:
+                    type: number
+                    format: double
+                - name: longitude
+                  in: query
+                  schema:
+                    type: number
+                    format: double
+                - name: radiusKm
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: minAge
+                  in: query
+                  description: 高级过滤
+                  schema:
+                    type: integer
+                    format: int32
+                - name: maxAge
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: country
+                  in: query
+                  schema:
+                    type: string
+                - name: city
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SearchUsersResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/{userId}:
+        get:
+            tags:
+                - CompleteExampleService
+            description: GET请求 - 路径参数
+            operationId: CompleteExampleService_GetUser
+            parameters:
+                - name: userId
+                  in: path
+                  description: 路径参数 - UUID验证
+                  required: true
+                  schema:
+                    type: string
+                - name: fields
+                  in: query
+                  description: 查询参数 - 选择字段
+                  schema:
+                    type: array
+                    items:
+                        type: string
+                - name: includeProfile
+                  in: query
+                  schema:
+                    type: boolean
+                - name: includePosts
+                  in: query
+                  schema:
+                    type: boolean
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetUserResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        put:
+            tags:
+                - CompleteExampleService
+            description: PUT请求 - 完整更新
+            operationId: CompleteExampleService_UpdateUser
+            parameters:
+                - name: userId
+                  in: path
+                  description: 路径参数
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UpdateUserRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UpdateUserResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        delete:
+            tags:
+                - CompleteExampleService
+            description: DELETE请求
+            operationId: CompleteExampleService_DeleteUser
+            parameters:
+                - name: userId
+                  in: path
+                  description: 路径参数
+                  required: true
+                  schema:
+                    type: string
+                - name: hardDelete
+                  in: query
+                  description: 查询参数 - 删除选项
+                  schema:
+                    type: boolean
+                - name: deleteReason
+                  in: query
+                  schema:
+                    type: string
+                - name: transferData
+                  in: query
+                  schema:
+                    type: boolean
+                - name: transferToUser
+                  in: query
+                  schema:
+                    type: string
+                - name: confirmation
+                  in: query
+                  description: Header参数 - 安全确认
+                  schema:
+                    type: string
+                - name: authorization
+                  in: query
+                  schema:
+                    type: string
+                - name: adminToken
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeleteUserResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        patch:
+            tags:
+                - CompleteExampleService
+            description: PATCH请求 - 部分更新
+            operationId: CompleteExampleService_PatchUser
+            parameters:
+                - name: userId
+                  in: path
+                  description: 路径参数
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PatchUserRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PatchUserResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/{userId}/posts:
+        post:
+            tags:
+                - CompleteExampleService
+            description: POST请求 - 混合参数 (路径 + 查询 + Body + Headers)
+            operationId: CompleteExampleService_CreatePost
+            parameters:
+                - name: userId
+                  in: path
+                  description: 路径参数
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreatePostRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CreatePostResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/{userId}/posts/{postId}/comments:
+        get:
+            tags:
+                - CompleteExampleService
+            description: 嵌套路径参数
+            operationId: CompleteExampleService_GetPostComments
+            parameters:
+                - name: userId
+                  in: path
+                  description: 嵌套路径参数
+                  required: true
+                  schema:
+                    type: string
+                - name: postId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: page
+                  in: query
+                  description: 查询参数 - 分页和排序
+                  schema:
+                    type: integer
+                    format: int32
+                - name: perPage
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: sort
+                  in: query
+                  schema:
+                    type: string
+                - name: order
+                  in: query
+                  schema:
+                    type: string
+                - name: status
+                  in: query
+                  description: 过滤选项
+                  schema:
+                    type: string
+                - name: includeReplies
+                  in: query
+                  schema:
+                    type: boolean
+                - name: includeHidden
+                  in: query
+                  schema:
+                    type: boolean
+                - name: since
+                  in: query
+                  description: 日期过滤
+                  schema:
+                    type: string
+                - name: until
+                  in: query
+                  schema:
+                    type: string
+                - name: userContext
+                  in: query
+                  description: Header参数 - 用户上下文
+                  schema:
+                    type: string
+                - name: clientTimezone
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetPostCommentsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/{userId}/profile:
+        get:
+            tags:
+                - CompleteExampleService
+            description: 多种绑定路径 (Additional Bindings)
+            operationId: CompleteExampleService_GetUserProfile
+            parameters:
+                - name: userId
+                  in: path
+                  description: 路径参数 - 支持多种路径模式
+                  required: true
+                  schema:
+                    type: string
+                - name: sections
+                  in: query
+                  description: 查询参数 - 个人资料选项
+                  schema:
+                    type: array
+                    items:
+                        type: string
+                - name: includeStats
+                  in: query
+                  schema:
+                    type: boolean
+                - name: includePosts
+                  in: query
+                  schema:
+                    type: boolean
+                - name: includeFollowers
+                  in: query
+                  schema:
+                    type: boolean
+                - name: viewerContext
+                  in: query
+                  description: 隐私设置
+                  schema:
+                    type: string
+                - name: viewerId
+                  in: query
+                  description: Header参数 - 访问者信息
+                  schema:
+                    type: string
+                - name: accessToken
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetUserProfileResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        put:
+            tags:
+                - CompleteExampleService
+            description: PUT请求 - 部分Body
+            operationId: CompleteExampleService_UpdateProfile
+            parameters:
+                - name: userId
+                  in: path
+                  description: 路径参数
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UserProfile'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UpdateProfileResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /test/bindings/{pathParam}:
         post:
             tags:
@@ -381,6 +1057,31 @@ paths:
                                 $ref: '#/components/schemas/Status'
 components:
     schemas:
+        Address:
+            type: object
+            properties:
+                street:
+                    type: string
+                street2:
+                    type: string
+                city:
+                    type: string
+                state:
+                    type: string
+                country:
+                    type: string
+                postalCode:
+                    type: string
+                latitude:
+                    type: number
+                    format: double
+                longitude:
+                    type: number
+                    format: double
+                isPrimary:
+                    type: boolean
+                addressType:
+                    type: string
         AllBindingsRequest:
             type: object
             properties:
@@ -452,6 +1153,270 @@ components:
                     type: integer
                     description: Author ID that can be from URI or form
                     format: int32
+        BatchDeleteUsersResponse:
+            type: object
+            properties:
+                totalRequested:
+                    type: integer
+                    format: int32
+                successfullyDeleted:
+                    type: integer
+                    format: int32
+                failedDeletions:
+                    type: integer
+                    format: int32
+                deletedUserIds:
+                    type: array
+                    items:
+                        type: string
+                errors:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/BatchError'
+                operationId:
+                    type: string
+                message:
+                    type: string
+        BatchError:
+            type: object
+            properties:
+                id:
+                    type: string
+                errorCode:
+                    type: string
+                errorMessage:
+                    type: string
+                details:
+                    type: object
+                    additionalProperties:
+                        type: string
+        Comment:
+            type: object
+            properties:
+                id:
+                    type: string
+                postId:
+                    type: string
+                userId:
+                    type: string
+                parentId:
+                    type: string
+                content:
+                    type: string
+                status:
+                    type: string
+                likeCount:
+                    type: integer
+                    format: int32
+                replyCount:
+                    type: integer
+                    format: int32
+                isPinned:
+                    type: boolean
+                isEdited:
+                    type: boolean
+                createdAt:
+                    type: string
+                updatedAt:
+                    type: string
+                editedAt:
+                    type: string
+        CommentStats:
+            type: object
+            properties:
+                totalComments:
+                    type: integer
+                    format: int32
+                publishedComments:
+                    type: integer
+                    format: int32
+                hiddenComments:
+                    type: integer
+                    format: int32
+                totalReplies:
+                    type: integer
+                    format: int32
+                averageRating:
+                    type: number
+                    format: double
+                flaggedCount:
+                    type: integer
+                    format: int32
+        CreatePostRequest:
+            type: object
+            properties:
+                userId:
+                    type: string
+                    description: 路径参数
+                draft:
+                    type: boolean
+                    description: 查询参数 - 发布选项
+                source:
+                    type: string
+                notifyFollowers:
+                    type: boolean
+                authorization:
+                    type: string
+                    description: Header参数 - 认证和元数据
+                contentType:
+                    type: string
+                userAgent:
+                    type: string
+                clientVersion:
+                    type: string
+                requestId:
+                    type: string
+                title:
+                    type: string
+                    description: JSON Body - 文章内容
+                content:
+                    type: string
+                excerpt:
+                    type: string
+                category:
+                    type: string
+                    description: 分类和标签
+                tags:
+                    type: array
+                    items:
+                        type: string
+                visibility:
+                    type: string
+                    description: 发布设置
+                allowComments:
+                    type: boolean
+                publishAt:
+                    type: string
+                metaTitle:
+                    type: string
+                    description: SEO设置
+                metaDescription:
+                    type: string
+                seoKeywords:
+                    type: array
+                    items:
+                        type: string
+                imageUrls:
+                    type: array
+                    items:
+                        type: string
+                    description: 媒体和附件
+                attachmentUrls:
+                    type: array
+                    items:
+                        type: string
+                customFields:
+                    type: object
+                    additionalProperties:
+                        type: string
+                    description: 自定义字段
+                externalId:
+                    type: string
+        CreatePostResponse:
+            type: object
+            properties:
+                post:
+                    $ref: '#/components/schemas/Post'
+                message:
+                    type: string
+                editUrl:
+                    type: string
+                previewUrl:
+                    type: string
+                warnings:
+                    type: array
+                    items:
+                        type: string
+                requiresApproval:
+                    type: boolean
+        CreateUserRequest:
+            type: object
+            properties:
+                username:
+                    type: string
+                    description: 基本信息 - 必需字段 + 格式验证
+                email:
+                    type: string
+                password:
+                    type: string
+                fullName:
+                    type: string
+                    description: 个人信息 - 可选字段
+                phone:
+                    type: string
+                age:
+                    type: integer
+                    format: int32
+                gender:
+                    type: string
+                bio:
+                    type: string
+                address:
+                    allOf:
+                        - $ref: '#/components/schemas/Address'
+                    description: 地址信息 - 嵌套对象验证
+                hobbies:
+                    type: array
+                    items:
+                        type: string
+                    description: 数组字段 - 数组长度验证
+                languages:
+                    type: array
+                    items:
+                        type: string
+                socialLinks:
+                    type: object
+                    additionalProperties:
+                        type: string
+                    description: Map字段
+                preferences:
+                    type: object
+                    additionalProperties:
+                        type: string
+                settings:
+                    allOf:
+                        - $ref: '#/components/schemas/UserSettings'
+                    description: 用户设置
+                agreeTerms:
+                    type: boolean
+                    description: 验证字段
+                subscribeNewsletter:
+                    type: boolean
+                referralCode:
+                    type: string
+                    description: 自定义标签示例
+                tags:
+                    type: array
+                    items:
+                        type: string
+        CreateUserResponse:
+            type: object
+            properties:
+                user:
+                    $ref: '#/components/schemas/User'
+                message:
+                    type: string
+                activationToken:
+                    type: string
+                warnings:
+                    type: array
+                    items:
+                        type: string
+        DeleteUserResponse:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                message:
+                    type: string
+                deletedAt:
+                    type: string
+                isRecoverable:
+                    type: boolean
+                recoveryDeadline:
+                    type: string
+                backupLocation:
+                    type: string
         FormBindingRequest:
             type: object
             properties:
@@ -499,6 +1464,62 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/Article'
+        GetPostCommentsResponse:
+            type: object
+            properties:
+                comments:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Comment'
+                totalCount:
+                    type: integer
+                    format: int32
+                page:
+                    type: integer
+                    format: int32
+                perPage:
+                    type: integer
+                    format: int32
+                hasMore:
+                    type: boolean
+                stats:
+                    $ref: '#/components/schemas/CommentStats'
+        GetUserProfileResponse:
+            type: object
+            properties:
+                user:
+                    $ref: '#/components/schemas/User'
+                profile:
+                    $ref: '#/components/schemas/UserProfile'
+                stats:
+                    $ref: '#/components/schemas/UserStats'
+                recentPosts:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Post'
+                followers:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/User'
+                isFollowing:
+                    type: boolean
+                canMessage:
+                    type: boolean
+                profileVisibility:
+                    type: string
+        GetUserResponse:
+            type: object
+            properties:
+                user:
+                    $ref: '#/components/schemas/User'
+                profile:
+                    $ref: '#/components/schemas/UserProfile'
+                posts:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Post'
+                stats:
+                    $ref: '#/components/schemas/UserStats'
         GoogleProtobufAny:
             type: object
             properties:
@@ -558,6 +1579,24 @@ components:
                 validationScore:
                     type: integer
                     format: int32
+        ListUsersResponse:
+            type: object
+            properties:
+                users:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/User'
+                totalCount:
+                    type: integer
+                    format: int32
+                page:
+                    type: integer
+                    format: int32
+                pageSize:
+                    type: integer
+                    format: int32
+                hasNext:
+                    type: boolean
         MixedBindingRequest:
             type: object
             properties:
@@ -611,6 +1650,90 @@ components:
                     type: array
                     items:
                         type: string
+        PatchUserRequest:
+            type: object
+            properties:
+                userId:
+                    type: string
+                    description: 路径参数
+                ifMatch:
+                    type: string
+                    description: Header参数 - 条件更新和元数据
+                ifUnmodifiedSince:
+                    type: string
+                authorization:
+                    type: string
+                patchSource:
+                    type: string
+                username:
+                    type: string
+                    description: JSON Body - 部分更新字段 (所有字段都是可选的)
+                email:
+                    type: string
+                fullName:
+                    type: string
+                phone:
+                    type: string
+                bio:
+                    type: string
+                status:
+                    type: string
+                profilePatches:
+                    type: object
+                    additionalProperties:
+                        type: string
+                    description: 部分更新的嵌套对象 - Map形式
+                settingsPatches:
+                    type: object
+                    additionalProperties:
+                        type: string
+                addressPatches:
+                    type: object
+                    additionalProperties:
+                        type: string
+                addRoles:
+                    type: array
+                    items:
+                        type: string
+                    description: 数组操作 - 添加/删除
+                removeRoles:
+                    type: array
+                    items:
+                        type: string
+                addTags:
+                    type: array
+                    items:
+                        type: string
+                removeTags:
+                    type: array
+                    items:
+                        type: string
+                patchReason:
+                    type: string
+                    description: 操作元数据
+                patchMetadata:
+                    type: object
+                    additionalProperties:
+                        type: string
+        PatchUserResponse:
+            type: object
+            properties:
+                user:
+                    $ref: '#/components/schemas/User'
+                patchedFields:
+                    type: array
+                    items:
+                        type: string
+                appliedOperations:
+                    type: array
+                    items:
+                        type: string
+                message:
+                    type: string
+                warnings:
+                    type: array
+                    items:
+                        type: string
         PathBindingResponse:
             type: object
             properties:
@@ -620,6 +1743,71 @@ components:
                     type: string
                 fullPath:
                     type: string
+        Post:
+            type: object
+            properties:
+                id:
+                    type: string
+                userId:
+                    type: string
+                title:
+                    type: string
+                content:
+                    type: string
+                excerpt:
+                    type: string
+                category:
+                    type: string
+                tags:
+                    type: array
+                    items:
+                        type: string
+                status:
+                    type: string
+                visibility:
+                    type: string
+                allowComments:
+                    type: boolean
+                imageUrls:
+                    type: array
+                    items:
+                        type: string
+                attachmentUrls:
+                    type: array
+                    items:
+                        type: string
+                metaTitle:
+                    type: string
+                metaDescription:
+                    type: string
+                seoKeywords:
+                    type: array
+                    items:
+                        type: string
+                customFields:
+                    type: object
+                    additionalProperties:
+                        type: string
+                viewCount:
+                    type: integer
+                    format: int32
+                likeCount:
+                    type: integer
+                    format: int32
+                commentCount:
+                    type: integer
+                    format: int32
+                shareCount:
+                    type: integer
+                    format: int32
+                createdAt:
+                    type: string
+                updatedAt:
+                    type: string
+                publishedAt:
+                    type: string
+                externalId:
+                    type: string
         QueryBindingResponse:
             type: object
             properties:
@@ -627,6 +1815,100 @@ components:
                     type: integer
                     format: int32
                 results:
+                    type: array
+                    items:
+                        type: string
+        RegisterUserRequest:
+            type: object
+            properties:
+                username:
+                    type: string
+                    description: Form字段 - 表单提交场景
+                email:
+                    type: string
+                password:
+                    type: string
+                confirmPassword:
+                    type: string
+                firstName:
+                    type: string
+                    description: 个人信息 - Form绑定
+                lastName:
+                    type: string
+                birthDate:
+                    type: string
+                phone:
+                    type: string
+                gender:
+                    type: string
+                    description: 选择字段
+                country:
+                    type: string
+                timezone:
+                    type: string
+                interests:
+                    type: array
+                    items:
+                        type: string
+                    description: 多选字段
+                skills:
+                    type: array
+                    items:
+                        type: string
+                newsletterFrequency:
+                    type: string
+                    description: 订阅选项
+                marketingEmails:
+                    type: boolean
+                captchaResponse:
+                    type: string
+                    description: 验证码和安全
+                inviteCode:
+                    type: string
+                utmSource:
+                    type: string
+                    description: 营销追踪
+                utmMedium:
+                    type: string
+                utmCampaign:
+                    type: string
+                referrerUrl:
+                    type: string
+        RegisterUserResponse:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                userId:
+                    type: string
+                activationUrl:
+                    type: string
+                message:
+                    type: string
+                validationErrors:
+                    type: array
+                    items:
+                        type: string
+                warnings:
+                    type: array
+                    items:
+                        type: string
+        SearchUsersResponse:
+            type: object
+            properties:
+                users:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/User'
+                totalCount:
+                    type: integer
+                    format: int32
+                query:
+                    type: string
+                searchTime:
+                    type: number
+                    format: double
+                suggestions:
                     type: array
                     items:
                         type: string
@@ -646,8 +1928,248 @@ components:
                         $ref: '#/components/schemas/GoogleProtobufAny'
                     description: A list of messages that carry the error details.  There is a common set of message types for APIs to use.
             description: 'The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).'
+        UpdateProfileResponse:
+            type: object
+            properties:
+                profile:
+                    $ref: '#/components/schemas/UserProfile'
+                message:
+                    type: string
+                updatedFields:
+                    type: array
+                    items:
+                        type: string
+        UpdateUserRequest:
+            type: object
+            properties:
+                userId:
+                    type: string
+                    description: 路径参数
+                sendNotification:
+                    type: boolean
+                    description: 查询参数 - 更新选项
+                updateReason:
+                    type: string
+                ifMatch:
+                    type: string
+                    description: Header参数 - 条件更新
+                authorization:
+                    type: string
+                username:
+                    type: string
+                    description: JSON Body - 完整用户信息更新
+                email:
+                    type: string
+                fullName:
+                    type: string
+                phone:
+                    type: string
+                age:
+                    type: integer
+                    format: int32
+                bio:
+                    type: string
+                status:
+                    type: string
+                    description: 状态管理
+                roles:
+                    type: array
+                    items:
+                        type: string
+                address:
+                    allOf:
+                        - $ref: '#/components/schemas/Address'
+                    description: 地址和联系信息
+                socialLinks:
+                    type: object
+                    additionalProperties:
+                        type: string
+                settings:
+                    allOf:
+                        - $ref: '#/components/schemas/UserSettings'
+                    description: 用户设置
+                updatedAt:
+                    type: string
+                    description: 时间戳和版本控制
+                version:
+                    type: integer
+                    format: int32
+        UpdateUserResponse:
+            type: object
+            properties:
+                user:
+                    $ref: '#/components/schemas/User'
+                message:
+                    type: string
+                emailVerificationRequired:
+                    type: boolean
+                verificationUrl:
+                    type: string
+                updatedFields:
+                    type: array
+                    items:
+                        type: string
+        User:
+            type: object
+            properties:
+                id:
+                    type: string
+                username:
+                    type: string
+                email:
+                    type: string
+                fullName:
+                    type: string
+                phone:
+                    type: string
+                age:
+                    type: integer
+                    format: int32
+                gender:
+                    type: string
+                bio:
+                    type: string
+                status:
+                    type: string
+                roles:
+                    type: array
+                    items:
+                        type: string
+                address:
+                    $ref: '#/components/schemas/Address'
+                profile:
+                    $ref: '#/components/schemas/UserProfile'
+                settings:
+                    $ref: '#/components/schemas/UserSettings'
+                socialLinks:
+                    type: object
+                    additionalProperties:
+                        type: string
+                hobbies:
+                    type: array
+                    items:
+                        type: string
+                languages:
+                    type: array
+                    items:
+                        type: string
+                createdAt:
+                    type: string
+                updatedAt:
+                    type: string
+                lastLoginAt:
+                    type: string
+                version:
+                    type: integer
+                    format: int32
+        UserProfile:
+            type: object
+            properties:
+                bio:
+                    type: string
+                avatarUrl:
+                    type: string
+                coverImageUrl:
+                    type: string
+                website:
+                    type: string
+                location:
+                    type: string
+                birthDate:
+                    type: string
+                occupation:
+                    type: string
+                company:
+                    type: string
+                education:
+                    type: string
+                interests:
+                    type: array
+                    items:
+                        type: string
+                skills:
+                    type: array
+                    items:
+                        type: string
+                contactInfo:
+                    type: object
+                    additionalProperties:
+                        type: string
+                isPublic:
+                    type: boolean
+                verified:
+                    type: boolean
+                verificationType:
+                    type: string
+        UserSettings:
+            type: object
+            properties:
+                emailNotifications:
+                    type: boolean
+                pushNotifications:
+                    type: boolean
+                smsNotifications:
+                    type: boolean
+                theme:
+                    type: string
+                language:
+                    type: string
+                timezone:
+                    type: string
+                dateFormat:
+                    type: string
+                timeFormat:
+                    type: string
+                twoFactorEnabled:
+                    type: boolean
+                privacyLevel:
+                    type: string
+                showOnlineStatus:
+                    type: boolean
+                allowMessages:
+                    type: boolean
+                preferences:
+                    type: object
+                    additionalProperties:
+                        type: string
+                blockedUsers:
+                    type: array
+                    items:
+                        type: string
+                mutedKeywords:
+                    type: array
+                    items:
+                        type: string
+        UserStats:
+            type: object
+            properties:
+                postCount:
+                    type: integer
+                    format: int32
+                followerCount:
+                    type: integer
+                    format: int32
+                followingCount:
+                    type: integer
+                    format: int32
+                likeCount:
+                    type: integer
+                    format: int32
+                commentCount:
+                    type: integer
+                    format: int32
+                engagementRate:
+                    type: number
+                    format: double
+                lastActivity:
+                    type: string
+                profileViews:
+                    type: integer
+                    format: int32
 tags:
     - name: BlogService
       description: blog service is a blog demo
+    - name: CompleteExampleService
+      description: 完整功能展示服务 - HTTP方法、参数类型、验证规则的综合示例
     - name: GinBindingTestService
       description: 全面的Gin绑定测试服务

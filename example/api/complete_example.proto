@@ -1,0 +1,714 @@
+syntax = "proto3";
+
+option go_package = "github.com/go-kenka/ginpb/example/api;api";
+
+package example;
+
+import "google/api/annotations.proto";
+import "tag/tags.proto";
+
+// 完整功能展示服务 - HTTP方法、参数类型、验证规则的综合示例
+service CompleteExampleService {
+  // ========== GET 请求示例 ==========
+  
+  // 简单GET请求 - 查询参数
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users"
+    };
+  }
+
+  // GET请求 - 路径参数
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users/{user_id}"
+    };
+  }
+
+  // GET请求 - 复杂查询 + Header参数
+  rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users/search"
+    };
+  }
+
+  // ========== POST 请求示例 ==========
+
+  // POST请求 - JSON Body
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/users"
+      body: "*"
+    };
+  }
+
+  // POST请求 - Form Body
+  rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/users/register"
+      body: "*"
+    };
+  }
+
+  // POST请求 - 混合参数 (路径 + 查询 + Body + Headers)
+  rpc CreatePost(CreatePostRequest) returns (CreatePostResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/users/{user_id}/posts"
+      body: "*"
+    };
+  }
+
+  // ========== PUT 请求示例 ==========
+
+  // PUT请求 - 完整更新
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/users/{user_id}"
+      body: "*"
+    };
+  }
+
+  // PUT请求 - 部分Body
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/users/{user_id}/profile"
+      body: "profile"
+    };
+  }
+
+  // ========== PATCH 请求示例 ==========
+
+  // PATCH请求 - 部分更新
+  rpc PatchUser(PatchUserRequest) returns (PatchUserResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/users/{user_id}"
+      body: "*"
+    };
+  }
+
+  // ========== DELETE 请求示例 ==========
+
+  // DELETE请求
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/users/{user_id}"
+    };
+  }
+
+  // DELETE请求 - 批量操作
+  rpc BatchDeleteUsers(BatchDeleteUsersRequest) returns (BatchDeleteUsersResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/users"
+    };
+  }
+
+  // ========== 复杂场景示例 ==========
+
+  // 嵌套路径参数
+  rpc GetPostComments(GetPostCommentsRequest) returns (GetPostCommentsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users/{user_id}/posts/{post_id}/comments"
+    };
+  }
+
+  // 多种绑定路径 (Additional Bindings)
+  rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users/{user_id}/profile"
+      additional_bindings {
+        get: "/api/v1/profiles/{user_id}"
+      }
+    };
+  }
+}
+
+// ========== GET 请求消息 ==========
+
+message ListUsersRequest {
+  // 分页参数 - Form绑定 + 验证
+  int32 page = 1 [(tag.tags) = { form: "page", binding: "min=1" }];
+  int32 page_size = 2 [(tag.tags) = { form: "page_size", binding: "min=1,max=100" }];
+  
+  // 排序参数 - 枚举验证
+  string sort_by = 3 [(tag.tags) = { form: "sort_by", binding: "oneof=id name email created_at" }];
+  string sort_order = 4 [(tag.tags) = { form: "sort_order", binding: "oneof=asc desc" }];
+  
+  // 过滤参数 - 数组
+  repeated string status = 5 [(tag.form_tag) = "status"];
+  repeated string roles = 6 [(tag.form_tag) = "roles"];
+  
+  // 布尔参数
+  bool include_deleted = 7 [(tag.form_tag) = "include_deleted"];
+  bool include_stats = 8 [(tag.form_tag) = "include_stats"];
+  
+  // 日期范围 - 日期格式验证
+  string created_after = 9 [(tag.tags) = { form: "created_after", binding: "datetime=2006-01-02" }];
+  string created_before = 10 [(tag.tags) = { form: "created_before", binding: "datetime=2006-01-02" }];
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+  bool has_next = 5;
+}
+
+message GetUserRequest {
+  // 路径参数 - UUID验证
+  string user_id = 1 [(tag.tags) = { uri: "user_id", binding: "required,uuid" }];
+  
+  // 查询参数 - 选择字段
+  repeated string fields = 2 [(tag.form_tag) = "fields"];
+  bool include_profile = 3 [(tag.form_tag) = "include_profile"];
+  bool include_posts = 4 [(tag.form_tag) = "include_posts"];
+}
+
+message GetUserResponse {
+  User user = 1;
+  UserProfile profile = 2;
+  repeated Post posts = 3;
+  UserStats stats = 4;
+}
+
+message SearchUsersRequest {
+  // 查询参数 - 必需 + 长度验证
+  string query = 1 [(tag.tags) = { form: "q", binding: "required,min=2,max=100" }];
+  
+  // 搜索选项
+  repeated string search_fields = 2 [(tag.form_tag) = "search_fields"];
+  int32 limit = 3 [(tag.tags) = { form: "limit", binding: "min=1,max=50" }];
+  
+  // Header参数 - 客户端信息
+  string client_id = 4 [(tag.tags) = { header: "X-Client-ID", binding: "required" }];
+  string request_id = 5 [(tag.header_tag) = "X-Request-ID"];
+  string user_agent = 6 [(tag.header_tag) = "User-Agent"];
+  string api_key = 7 [(tag.tags) = { header: "X-API-Key", binding: "required,min=32,max=64" }];
+  
+  // 地理位置过滤 - 数值范围验证
+  double latitude = 8 [(tag.tags) = { form: "lat", binding: "min=-90,max=90" }];
+  double longitude = 9 [(tag.tags) = { form: "lng", binding: "min=-180,max=180" }];
+  int32 radius_km = 10 [(tag.tags) = { form: "radius", binding: "min=1,max=1000" }];
+  
+  // 高级过滤
+  int32 min_age = 11 [(tag.tags) = { form: "min_age", binding: "min=0,max=150" }];
+  int32 max_age = 12 [(tag.tags) = { form: "max_age", binding: "min=0,max=150" }];
+  string country = 13 [(tag.form_tag) = "country"];
+  string city = 14 [(tag.form_tag) = "city"];
+}
+
+message SearchUsersResponse {
+  repeated User users = 1;
+  int32 total_count = 2;
+  string query = 3;
+  double search_time = 4;
+  repeated string suggestions = 5;
+}
+
+// ========== POST 请求消息 ==========
+
+message CreateUserRequest {
+  // 基本信息 - 必需字段 + 格式验证
+  string username = 1 [(tag.tags) = { json: "username", binding: "required,min=3,max=50,alphanum" }];
+  string email = 2 [(tag.tags) = { json: "email", binding: "required,email" }];
+  string password = 3 [(tag.tags) = { json: "password", binding: "required,min=8,max=128" }];
+  
+  // 个人信息 - 可选字段
+  string full_name = 4 [(tag.tags) = { json: "full_name", binding: "min=2,max=100" }];
+  string phone = 5 [(tag.tags) = { json: "phone", binding: "len=11,numeric" }];
+  int32 age = 6 [(tag.tags) = { json: "age", binding: "min=13,max=120" }];
+  string gender = 7 [(tag.tags) = { json: "gender", binding: "oneof=male female other" }];
+  string bio = 8 [(tag.tags) = { json: "bio", binding: "max=500" }];
+  
+  // 地址信息 - 嵌套对象验证
+  Address address = 9 [(tag.tags) = { json: "address" }];
+  
+  // 数组字段 - 数组长度验证
+  repeated string hobbies = 10 [(tag.tags) = { json: "hobbies", binding: "min=1,max=10" }];
+  repeated string languages = 11 [(tag.tags) = { json: "languages", binding: "max=20" }];
+  
+  // Map字段
+  map<string, string> social_links = 12 [(tag.tags) = { json: "social_links" }];
+  map<string, string> preferences = 13 [(tag.tags) = { json: "preferences" }];
+  
+  // 用户设置
+  UserSettings settings = 14 [(tag.tags) = { json: "settings" }];
+  
+  // 验证字段
+  bool agree_terms = 15 [(tag.tags) = { json: "agree_terms", binding: "required,eq=true" }];
+  bool subscribe_newsletter = 16 [(tag.tags) = { json: "subscribe_newsletter" }];
+  
+  // 自定义标签示例
+  string referral_code = 17 [(tag.tags) = { json: "referral_code", custom: "referral_format" }];
+  repeated string tags = 18 [(tag.tags) = { json: "tags", custom: "max_length:20" }];
+}
+
+message CreateUserResponse {
+  User user = 1;
+  string message = 2;
+  string activation_token = 3;
+  repeated string warnings = 4;
+}
+
+message RegisterUserRequest {
+  // Form字段 - 表单提交场景
+  string username = 1 [(tag.tags) = { form: "username", binding: "required,min=3,max=30,alphanum" }];
+  string email = 2 [(tag.tags) = { form: "email", binding: "required,email" }];
+  string password = 3 [(tag.tags) = { form: "password", binding: "required,min=8" }];
+  string confirm_password = 4 [(tag.tags) = { form: "confirm_password", binding: "required,eqfield=Password" }];
+  
+  // 个人信息 - Form绑定
+  string first_name = 5 [(tag.tags) = { form: "first_name", binding: "required,min=2,max=50" }];
+  string last_name = 6 [(tag.tags) = { form: "last_name", binding: "required,min=2,max=50" }];
+  string birth_date = 7 [(tag.tags) = { form: "birth_date", binding: "required,datetime=2006-01-02" }];
+  string phone = 8 [(tag.tags) = { form: "phone", binding: "required,len=11,numeric" }];
+  
+  // 选择字段
+  string gender = 9 [(tag.tags) = { form: "gender", binding: "oneof=male female other prefer_not_to_say" }];
+  string country = 10 [(tag.tags) = { form: "country", binding: "required,min=2,max=2" }]; // ISO国家代码
+  string timezone = 11 [(tag.tags) = { form: "timezone", binding: "required" }];
+  
+  // 多选字段
+  repeated string interests = 12 [(tag.form_tag) = "interests"];
+  repeated string skills = 13 [(tag.form_tag) = "skills"];
+  
+  // 订阅选项
+  string newsletter_frequency = 14 [(tag.tags) = { form: "newsletter", binding: "oneof=never daily weekly monthly" }];
+  bool marketing_emails = 15 [(tag.form_tag) = "marketing_emails"];
+  
+  // 验证码和安全
+  string captcha_response = 16 [(tag.tags) = { form: "captcha", binding: "required,len=6" }];
+  string invite_code = 17 [(tag.form_tag) = "invite_code"];
+  
+  // 营销追踪
+  string utm_source = 18 [(tag.form_tag) = "utm_source"];
+  string utm_medium = 19 [(tag.form_tag) = "utm_medium"];
+  string utm_campaign = 20 [(tag.form_tag) = "utm_campaign"];
+  string referrer_url = 21 [(tag.form_tag) = "referrer"];
+}
+
+message RegisterUserResponse {
+  bool success = 1;
+  string user_id = 2;
+  string activation_url = 3;
+  string message = 4;
+  repeated string validation_errors = 5;
+  repeated string warnings = 6;
+}
+
+message CreatePostRequest {
+  // 路径参数
+  string user_id = 1 [(tag.tags) = { uri: "user_id", binding: "required,uuid" }];
+  
+  // 查询参数 - 发布选项
+  bool draft = 2 [(tag.form_tag) = "draft"];
+  string source = 3 [(tag.tags) = { form: "source", binding: "oneof=web mobile app api" }];
+  bool notify_followers = 4 [(tag.form_tag) = "notify_followers"];
+  
+  // Header参数 - 认证和元数据
+  string authorization = 5 [(tag.tags) = { header: "Authorization", binding: "required,startswith=Bearer " }];
+  string content_type = 6 [(tag.tags) = { header: "Content-Type", binding: "required" }];
+  string user_agent = 7 [(tag.header_tag) = "User-Agent"];
+  string client_version = 8 [(tag.header_tag) = "X-Client-Version"];
+  string request_id = 9 [(tag.header_tag) = "X-Request-ID"];
+  
+  // JSON Body - 文章内容
+  string title = 10 [(tag.tags) = { json: "title", binding: "required,min=5,max=200" }];
+  string content = 11 [(tag.tags) = { json: "content", binding: "required,min=50,max=50000" }];
+  string excerpt = 12 [(tag.tags) = { json: "excerpt", binding: "max=500" }];
+  
+  // 分类和标签
+  string category = 13 [(tag.tags) = { json: "category", binding: "required" }];
+  repeated string tags = 14 [(tag.tags) = { json: "tags", binding: "min=1,max=10" }];
+  
+  // 发布设置
+  string visibility = 15 [(tag.tags) = { json: "visibility", binding: "required,oneof=public private draft" }];
+  bool allow_comments = 16 [(tag.tags) = { json: "allow_comments" }];
+  string publish_at = 17 [(tag.tags) = { json: "publish_at", binding: "datetime=2006-01-02T15:04:05Z07:00" }];
+  
+  // SEO设置
+  string meta_title = 18 [(tag.tags) = { json: "meta_title", binding: "max=60" }];
+  string meta_description = 19 [(tag.tags) = { json: "meta_description", binding: "max=160" }];
+  repeated string seo_keywords = 20 [(tag.tags) = { json: "seo_keywords", binding: "max=10" }];
+  
+  // 媒体和附件
+  repeated string image_urls = 21 [(tag.tags) = { json: "images", binding: "max=20" }];
+  repeated string attachment_urls = 22 [(tag.tags) = { json: "attachments", binding: "max=10" }];
+  
+  // 自定义字段
+  map<string, string> custom_fields = 23 [(tag.tags) = { json: "custom_fields", custom: "validate:post_custom_fields" }];
+  string external_id = 24 [(tag.tags) = { json: "external_id", custom: "external_id_format" }];
+}
+
+message CreatePostResponse {
+  Post post = 1;
+  string message = 2;
+  string edit_url = 3;
+  string preview_url = 4;
+  repeated string warnings = 5;
+  bool requires_approval = 6;
+}
+
+// ========== PUT 请求消息 ==========
+
+message UpdateUserRequest {
+  // 路径参数
+  string user_id = 1 [(tag.tags) = { uri: "user_id", binding: "required,uuid" }];
+  
+  // 查询参数 - 更新选项
+  bool send_notification = 2 [(tag.form_tag) = "send_notification"];
+  string update_reason = 3 [(tag.form_tag) = "reason"];
+  
+  // Header参数 - 条件更新
+  string if_match = 4 [(tag.header_tag) = "If-Match"];
+  string authorization = 5 [(tag.tags) = { header: "Authorization", binding: "required" }];
+  
+  // JSON Body - 完整用户信息更新
+  string username = 6 [(tag.tags) = { json: "username", binding: "required,min=3,max=50" }];
+  string email = 7 [(tag.tags) = { json: "email", binding: "required,email" }];
+  string full_name = 8 [(tag.tags) = { json: "full_name", binding: "required,min=2,max=100" }];
+  string phone = 9 [(tag.tags) = { json: "phone", binding: "len=11,numeric" }];
+  int32 age = 10 [(tag.tags) = { json: "age", binding: "min=13,max=120" }];
+  string bio = 11 [(tag.tags) = { json: "bio", binding: "max=1000" }];
+  
+  // 状态管理
+  string status = 12 [(tag.tags) = { json: "status", binding: "required,oneof=active inactive suspended banned" }];
+  repeated string roles = 13 [(tag.tags) = { json: "roles", binding: "min=1" }];
+  
+  // 地址和联系信息
+  Address address = 14 [(tag.tags) = { json: "address" }];
+  map<string, string> social_links = 15 [(tag.tags) = { json: "social_links" }];
+  
+  // 用户设置
+  UserSettings settings = 16 [(tag.tags) = { json: "settings" }];
+  
+  // 时间戳和版本控制
+  string updated_at = 17 [(tag.tags) = { json: "updated_at", binding: "required,datetime=2006-01-02T15:04:05Z07:00" }];
+  int32 version = 18 [(tag.tags) = { json: "version", binding: "required,min=1" }];
+}
+
+message UpdateUserResponse {
+  User user = 1;
+  string message = 2;
+  bool email_verification_required = 3;
+  string verification_url = 4;
+  repeated string updated_fields = 5;
+}
+
+message UpdateProfileRequest {
+  // 路径参数
+  string user_id = 1 [(tag.tags) = { uri: "user_id", binding: "required,uuid" }];
+  
+  // Body只包含profile字段 - 部分Body示例
+  UserProfile profile = 2;
+}
+
+message UpdateProfileResponse {
+  UserProfile profile = 1;
+  string message = 2;
+  repeated string updated_fields = 3;
+}
+
+// ========== PATCH 请求消息 ==========
+
+message PatchUserRequest {
+  // 路径参数
+  string user_id = 1 [(tag.tags) = { uri: "user_id", binding: "required,uuid" }];
+  
+  // Header参数 - 条件更新和元数据
+  string if_match = 2 [(tag.header_tag) = "If-Match"];
+  string if_unmodified_since = 3 [(tag.header_tag) = "If-Unmodified-Since"];
+  string authorization = 4 [(tag.tags) = { header: "Authorization", binding: "required" }];
+  string patch_source = 5 [(tag.header_tag) = "X-Patch-Source"];
+  
+  // JSON Body - 部分更新字段 (所有字段都是可选的)
+  string username = 6 [(tag.tags) = { json: "username", binding: "min=3,max=50" }];
+  string email = 7 [(tag.tags) = { json: "email", binding: "email" }];
+  string full_name = 8 [(tag.tags) = { json: "full_name", binding: "min=2,max=100" }];
+  string phone = 9 [(tag.tags) = { json: "phone", binding: "len=11,numeric" }];
+  string bio = 10 [(tag.tags) = { json: "bio", binding: "max=1000" }];
+  string status = 11 [(tag.tags) = { json: "status", binding: "oneof=active inactive suspended" }];
+  
+  // 部分更新的嵌套对象 - Map形式
+  map<string, string> profile_patches = 12 [(tag.tags) = { json: "profile_patches" }];
+  map<string, string> settings_patches = 13 [(tag.tags) = { json: "settings_patches" }];
+  map<string, string> address_patches = 14 [(tag.tags) = { json: "address_patches" }];
+  
+  // 数组操作 - 添加/删除
+  repeated string add_roles = 15 [(tag.tags) = { json: "add_roles" }];
+  repeated string remove_roles = 16 [(tag.tags) = { json: "remove_roles" }];
+  repeated string add_tags = 17 [(tag.tags) = { json: "add_tags" }];
+  repeated string remove_tags = 18 [(tag.tags) = { json: "remove_tags" }];
+  
+  // 操作元数据
+  string patch_reason = 19 [(tag.tags) = { json: "patch_reason", binding: "max=200" }];
+  map<string, string> patch_metadata = 20 [(tag.tags) = { json: "patch_metadata" }];
+}
+
+message PatchUserResponse {
+  User user = 1;
+  repeated string patched_fields = 2;
+  repeated string applied_operations = 3;
+  string message = 4;
+  repeated string warnings = 5;
+}
+
+// ========== DELETE 请求消息 ==========
+
+message DeleteUserRequest {
+  // 路径参数
+  string user_id = 1 [(tag.tags) = { uri: "user_id", binding: "required,uuid" }];
+  
+  // 查询参数 - 删除选项
+  bool hard_delete = 2 [(tag.form_tag) = "hard_delete"];
+  string delete_reason = 3 [(tag.tags) = { form: "reason", binding: "max=500" }];
+  bool transfer_data = 4 [(tag.form_tag) = "transfer_data"];
+  string transfer_to_user = 5 [(tag.tags) = { form: "transfer_to", binding: "uuid" }];
+  
+  // Header参数 - 安全确认
+  string confirmation = 6 [(tag.tags) = { header: "X-Confirm-Delete", binding: "required,eq=DELETE" }];
+  string authorization = 7 [(tag.tags) = { header: "Authorization", binding: "required" }];
+  string admin_token = 8 [(tag.header_tag) = "X-Admin-Token"];
+}
+
+message DeleteUserResponse {
+  bool success = 1;
+  string message = 2;
+  string deleted_at = 3;
+  bool is_recoverable = 4;
+  string recovery_deadline = 5;
+  string backup_location = 6;
+}
+
+message BatchDeleteUsersRequest {
+  // 查询参数 - 批量删除
+  repeated string user_ids = 1 [(tag.tags) = { form: "user_ids", binding: "required,min=1,max=100" }];
+  bool hard_delete = 2 [(tag.form_tag) = "hard_delete"];
+  string delete_reason = 3 [(tag.form_tag) = "reason"];
+  
+  // Header参数 - 批量操作安全确认
+  string batch_confirmation = 4 [(tag.tags) = { header: "X-Batch-Confirm", binding: "required" }];
+  string authorization = 5 [(tag.tags) = { header: "Authorization", binding: "required" }];
+  string operation_id = 6 [(tag.header_tag) = "X-Operation-ID"];
+}
+
+message BatchDeleteUsersResponse {
+  int32 total_requested = 1;
+  int32 successfully_deleted = 2;
+  int32 failed_deletions = 3;
+  repeated string deleted_user_ids = 4;
+  repeated BatchError errors = 5;
+  string operation_id = 6;
+  string message = 7;
+}
+
+// ========== 复杂场景消息 ==========
+
+message GetPostCommentsRequest {
+  // 嵌套路径参数
+  string user_id = 1 [(tag.tags) = { uri: "user_id", binding: "required,uuid" }];
+  string post_id = 2 [(tag.tags) = { uri: "post_id", binding: "required,uuid" }];
+  
+  // 查询参数 - 分页和排序
+  int32 page = 3 [(tag.tags) = { form: "page", binding: "min=1" }];
+  int32 per_page = 4 [(tag.tags) = { form: "per_page", binding: "min=1,max=100" }];
+  string sort = 5 [(tag.tags) = { form: "sort", binding: "oneof=created_at updated_at likes replies" }];
+  string order = 6 [(tag.tags) = { form: "order", binding: "oneof=asc desc" }];
+  
+  // 过滤选项
+  string status = 7 [(tag.tags) = { form: "status", binding: "oneof=all published hidden deleted" }];
+  bool include_replies = 8 [(tag.form_tag) = "include_replies"];
+  bool include_hidden = 9 [(tag.form_tag) = "include_hidden"];
+  
+  // 日期过滤
+  string since = 10 [(tag.tags) = { form: "since", binding: "datetime=2006-01-02T15:04:05Z07:00" }];
+  string until = 11 [(tag.tags) = { form: "until", binding: "datetime=2006-01-02T15:04:05Z07:00" }];
+  
+  // Header参数 - 用户上下文
+  string user_context = 12 [(tag.header_tag) = "X-User-Context"];
+  string client_timezone = 13 [(tag.header_tag) = "X-Client-Timezone"];
+}
+
+message GetPostCommentsResponse {
+  repeated Comment comments = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 per_page = 4;
+  bool has_more = 5;
+  CommentStats stats = 6;
+}
+
+message GetUserProfileRequest {
+  // 路径参数 - 支持多种路径模式
+  string user_id = 1 [(tag.tags) = { uri: "user_id", binding: "required,uuid" }];
+  
+  // 查询参数 - 个人资料选项
+  repeated string sections = 2 [(tag.form_tag) = "sections"];
+  bool include_stats = 3 [(tag.form_tag) = "include_stats"];
+  bool include_posts = 4 [(tag.form_tag) = "include_posts"];
+  bool include_followers = 5 [(tag.form_tag) = "include_followers"];
+  
+  // 隐私设置
+  string viewer_context = 6 [(tag.tags) = { form: "context", binding: "oneof=public friend follower self" }];
+  
+  // Header参数 - 访问者信息
+  string viewer_id = 7 [(tag.header_tag) = "X-Viewer-ID"];
+  string access_token = 8 [(tag.header_tag) = "X-Access-Token"];
+}
+
+message GetUserProfileResponse {
+  User user = 1;
+  UserProfile profile = 2;
+  UserStats stats = 3;
+  repeated Post recent_posts = 4;
+  repeated User followers = 5;
+  bool is_following = 6;
+  bool can_message = 7;
+  string profile_visibility = 8;
+}
+
+// ========== 数据模型 ==========
+
+message User {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+  string full_name = 4;
+  string phone = 5;
+  int32 age = 6;
+  string gender = 7;
+  string bio = 8;
+  string status = 9;
+  repeated string roles = 10;
+  Address address = 11;
+  UserProfile profile = 12;
+  UserSettings settings = 13;
+  map<string, string> social_links = 14;
+  repeated string hobbies = 15;
+  repeated string languages = 16;
+  string created_at = 17;
+  string updated_at = 18;
+  string last_login_at = 19;
+  int32 version = 20;
+}
+
+message UserProfile {
+  string bio = 1;
+  string avatar_url = 2;
+  string cover_image_url = 3;
+  string website = 4;
+  string location = 5;
+  string birth_date = 6;
+  string occupation = 7;
+  string company = 8;
+  string education = 9;
+  repeated string interests = 10;
+  repeated string skills = 11;
+  map<string, string> contact_info = 12;
+  bool is_public = 13;
+  bool verified = 14;
+  string verification_type = 15;
+}
+
+message UserSettings {
+  bool email_notifications = 1;
+  bool push_notifications = 2;
+  bool sms_notifications = 3;
+  string theme = 4;
+  string language = 5;
+  string timezone = 6;
+  string date_format = 7;
+  string time_format = 8;
+  bool two_factor_enabled = 9;
+  string privacy_level = 10;
+  bool show_online_status = 11;
+  bool allow_messages = 12;
+  map<string, string> preferences = 13;
+  repeated string blocked_users = 14;
+  repeated string muted_keywords = 15;
+}
+
+message Address {
+  string street = 1 [(tag.tags) = { json: "street", binding: "required" }];
+  string street2 = 2 [(tag.tags) = { json: "street2" }];
+  string city = 3 [(tag.tags) = { json: "city", binding: "required" }];
+  string state = 4 [(tag.tags) = { json: "state", binding: "required" }];
+  string country = 5 [(tag.tags) = { json: "country", binding: "required" }];
+  string postal_code = 6 [(tag.tags) = { json: "postal_code", binding: "required" }];
+  double latitude = 7 [(tag.tags) = { json: "latitude", binding: "min=-90,max=90" }];
+  double longitude = 8 [(tag.tags) = { json: "longitude", binding: "min=-180,max=180" }];
+  bool is_primary = 9 [(tag.tags) = { json: "is_primary" }];
+  string address_type = 10 [(tag.tags) = { json: "type", binding: "oneof=home work other" }];
+}
+
+message Post {
+  string id = 1;
+  string user_id = 2;
+  string title = 3;
+  string content = 4;
+  string excerpt = 5;
+  string category = 6;
+  repeated string tags = 7;
+  string status = 8;
+  string visibility = 9;
+  bool allow_comments = 10;
+  repeated string image_urls = 11;
+  repeated string attachment_urls = 12;
+  string meta_title = 13;
+  string meta_description = 14;
+  repeated string seo_keywords = 15;
+  map<string, string> custom_fields = 16;
+  int32 view_count = 17;
+  int32 like_count = 18;
+  int32 comment_count = 19;
+  int32 share_count = 20;
+  string created_at = 21;
+  string updated_at = 22;
+  string published_at = 23;
+  string external_id = 24;
+}
+
+message Comment {
+  string id = 1;
+  string post_id = 2;
+  string user_id = 3;
+  string parent_id = 4;
+  string content = 5;
+  string status = 6;
+  int32 like_count = 7;
+  int32 reply_count = 8;
+  bool is_pinned = 9;
+  bool is_edited = 10;
+  string created_at = 11;
+  string updated_at = 12;
+  string edited_at = 13;
+}
+
+// ========== 响应辅助类型 ==========
+
+message UserStats {
+  int32 post_count = 1;
+  int32 follower_count = 2;
+  int32 following_count = 3;
+  int32 like_count = 4;
+  int32 comment_count = 5;
+  double engagement_rate = 6;
+  string last_activity = 7;
+  int32 profile_views = 8;
+}
+
+message CommentStats {
+  int32 total_comments = 1;
+  int32 published_comments = 2;
+  int32 hidden_comments = 3;
+  int32 total_replies = 4;
+  double average_rating = 5;
+  int32 flagged_count = 6;
+}
+
+message BatchError {
+  string id = 1;
+  string error_code = 2;
+  string error_message = 3;
+  map<string, string> details = 4;
+}
