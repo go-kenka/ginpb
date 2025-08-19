@@ -44,25 +44,72 @@ type {{.ServiceType}}HTTPServer interface {
 {{- end}}
 }
 
-func Register{{.ServiceType}}HTTPServer(r gin.IRouter, srv {{.ServiceType}}HTTPServer) {
-	{{- range .Methods}}
-	r.{{.Method}}("{{.Path}}", _{{$svrType}}_{{.Name}}{{.Num}}_HTTP_Handler(srv))
-	{{- end}}
+// RegisterOption defines registration options
+type {{.ServiceType}}RegisterOption func(*{{.ServiceType}}RegisterOptions)
+
+// {{.ServiceType}}RegisterOptions registration configuration options
+type {{.ServiceType}}RegisterOptions struct {
+	globalMiddlewares    []gin.HandlerFunc
+	operationMiddlewares map[string][]gin.HandlerFunc
 }
 
-func Register{{.ServiceType}}HTTPServerWithMiddleware(r gin.IRouter, srv {{.ServiceType}}HTTPServer, middlewares ...gin.HandlerFunc) {
-	{{- range .Methods}}
-	r.{{.Method}}("{{.Path}}", append(middlewares, _{{$svrType}}_{{.Name}}{{.Num}}_HTTP_Handler(srv))...)
-	{{- end}}
-}
-
-func Register{{.ServiceType}}HTTPServerWithOperationMiddleware(r gin.IRouter, srv {{.ServiceType}}HTTPServer, middlewares map[string][]gin.HandlerFunc) {
-	{{- range .Methods}}
-	if mws, exists := middlewares[Operation{{$svrType}}{{.OriginalName}}]; exists {
-		r.{{.Method}}("{{.Path}}", append(mws, _{{$svrType}}_{{.Name}}{{.Num}}_HTTP_Handler(srv))...)
-	} else {
-		r.{{.Method}}("{{.Path}}", _{{$svrType}}_{{.Name}}{{.Num}}_HTTP_Handler(srv))
+// WithGlobalMiddleware adds global middleware
+func With{{.ServiceType}}GlobalMiddleware(middlewares ...gin.HandlerFunc) {{.ServiceType}}RegisterOption {
+	return func(o *{{.ServiceType}}RegisterOptions) {
+		o.globalMiddlewares = append(o.globalMiddlewares, middlewares...)
 	}
+}
+
+// WithOperationMiddleware adds middleware for specific operation
+func With{{.ServiceType}}OperationMiddleware(operation string, middlewares ...gin.HandlerFunc) {{.ServiceType}}RegisterOption {
+	return func(o *{{.ServiceType}}RegisterOptions) {
+		if o.operationMiddlewares == nil {
+			o.operationMiddlewares = make(map[string][]gin.HandlerFunc)
+		}
+		o.operationMiddlewares[operation] = append(o.operationMiddlewares[operation], middlewares...)
+	}
+}
+
+// WithOperationMiddlewares sets middleware for multiple operations
+func With{{.ServiceType}}OperationMiddlewares(middlewares map[string][]gin.HandlerFunc) {{.ServiceType}}RegisterOption {
+	return func(o *{{.ServiceType}}RegisterOptions) {
+		if o.operationMiddlewares == nil {
+			o.operationMiddlewares = make(map[string][]gin.HandlerFunc)
+		}
+		for operation, mws := range middlewares {
+			o.operationMiddlewares[operation] = append(o.operationMiddlewares[operation], mws...)
+		}
+	}
+}
+
+// Register{{.ServiceType}}HTTPServer registers HTTP server with function options pattern
+func Register{{.ServiceType}}HTTPServer(r gin.IRouter, srv {{.ServiceType}}HTTPServer, opts ...{{.ServiceType}}RegisterOption) {
+	options := &{{.ServiceType}}RegisterOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+	
+	// Helper function to register route with middleware support
+	registerRoute := func(method, path, operation string, handler gin.HandlerFunc) {
+		var finalHandlers []gin.HandlerFunc
+		
+		// Add global middlewares first
+		finalHandlers = append(finalHandlers, options.globalMiddlewares...)
+		
+		// Add operation-specific middlewares
+		if operationMws, exists := options.operationMiddlewares[operation]; exists {
+			finalHandlers = append(finalHandlers, operationMws...)
+		}
+		
+		// Add the handler at the end
+		finalHandlers = append(finalHandlers, handler)
+		
+		// Register the route
+		r.Handle(method, path, finalHandlers...)
+	}
+	
+	{{- range .Methods}}
+	registerRoute("{{.Method}}", "{{.Path}}", Operation{{$svrType}}{{.OriginalName}}, _{{$svrType}}_{{.Name}}{{.Num}}_HTTP_Handler(srv))
 	{{- end}}
 }
 
@@ -72,53 +119,47 @@ func _{{$svrType}}_{{.Name}}{{.Num}}_HTTP_Handler(srv {{$svrType}}HTTPServer) fu
 		// Set operation for middleware
 		ctx.Set("operation", Operation{{$svrType}}{{.OriginalName}})
 		
-		{{if .Fields}}var ginReq {{.Name | lower}}GinRequest{{else}}var in {{.Request}}{{end}}
+		{{if .Fields}}var ginReq _{{.Name}}GinRequest{{else}}var in {{.Request}}{{end}}
 		{{- if .HasBody}}
 		// body binding with automatic Content-Type detection
 		{{if .Fields}}if err := binding1.BindByContentType(ctx, &ginReq); err != nil {
-		{{else}}if err := binding1.BindByContentType(ctx, &in); err != nil {
+		{{- else}}if err := binding1.BindByContentType(ctx, &in); err != nil {
 		{{- end}}
 			ctx.Error(err)
 			return
 		}
-		
 		{{- if not (eq .Body "")}}
 		// query
 		{{if .Fields}}if err := ctx.BindQuery(&ginReq); err != nil {
-		{{else}}if err := ctx.BindQuery(&in); err != nil {
+		{{- else}}if err := ctx.BindQuery(&in); err != nil {
 		{{- end}}
 			ctx.Error(err)
 			return
 		}
-		{{- end}}
-		{{- else}}
+		{{end}}
+		{{else}}
 		// query
 		{{if .Fields}}if err := ctx.BindQuery(&ginReq); err != nil {
-		{{else}}if err := ctx.BindQuery(&in); err != nil {
+		{{- else}}if err := ctx.BindQuery(&in); err != nil {
 		{{- end}}
 			ctx.Error(err)
 			return
 		}
-		{{- end}}
+		{{end}}
 		{{- if .HasParams}}
 		// params
 		{{if .Fields}}if err := ctx.BindUri(&ginReq); err != nil {
-		{{else}}if err := ctx.BindUri(&in); err != nil {
+		{{- else}}if err := ctx.BindUri(&in); err != nil {
 		{{- end}}
 			ctx.Error(err)
 			return
 		}
-		{{- end}}
+		{{end}}
 		{{if .Fields}}
 		// Convert gin request to protobuf request
 		in := ginReq.to{{.Name}}Request()
-		
-		// Custom field tags detected:
-		{{range .Fields}}
-		// Field {{.GoName}}: {{range $key, $value := .Tags}}{{$key}}:"{{$value}}" {{end}}
-		{{- end}}
-		{{- end}}
-		// header,ip等常用信息, form表单信息,包括上传文件
+		{{end}}
+		// Use new context for metadata passing, including request, writer and route params
 		newCtx := metadata.NewContext(ctx)
 		{{if .Fields}}reply, err := srv.{{.Name}}(newCtx, in){{else}}reply, err := srv.{{.Name}}(newCtx, &in){{end}}
 		if err != nil {
@@ -151,20 +192,20 @@ func New{{.ServiceType}}HTTPClient(opts ...client.ClientOption) {{.ServiceType}}
 func (c *{{$svrType}}HTTPClientImpl) {{.Name}}(ctx context.Context, in *{{.Request}}, opts ...client.CallOption) (*{{.Reply}}, error) {
 	var out {{.Reply}}
 	
-	// 构建请求路径
+	// Build request path
 	path := "{{.ClientPath}}"
 	{{- if .HasParams}}
-	// 替换路径参数
+	// Replace path parameters
 	{{- range .PathParams}}
 	path = strings.ReplaceAll(path, "{{print "{" . "}" }}", fmt.Sprintf("%v", in.{{camelCase .}}))
 	{{- end}}
 	{{- end}}
 	
 	{{- if eq .Method "GET"}}
-	// GET请求
+	// GET request
 	err := c.client.Invoke(ctx, "{{.Method}}", path, nil, &out{{.ResponseBody}}, opts...)
 	{{- else}}
-	// {{.Method}}请求
+	// {{.Method}} request
 	{{if .HasBody -}}
 	err := c.client.Invoke(ctx, "{{.Method}}", path, in{{.Body}}, &out{{.ResponseBody}}, opts...)
 	{{else -}} 
@@ -183,22 +224,15 @@ var tagsStructTemplate = `// Internal structs with gin binding tags for protobuf
 {{$svrType := .ServiceType}}
 {{range .MethodSets}}
 {{if .Fields}}
-// {{.Name | lower}}GinRequest provides gin binding tags for {{.Request}}
-type {{.Name | lower}}GinRequest struct {
+// _{{.Name}}GinRequest provides gin binding tags for {{.Request}}
+type _{{.Name}}GinRequest struct {
 {{range .Fields}}	{{.GoName}} {{.GoType}} {{formatTags .Tags}}
 {{end}}}
 
 // convert{{.Name}}GinRequest converts from gin request struct to protobuf struct
-func (r *{{.Name | lower}}GinRequest) to{{.Name}}Request() *{{.Request}} {
+func (r *_{{.Name}}GinRequest) to{{.Name}}Request() *{{.Request}} {
 	return &{{.Request}}{
 {{range .Fields}}		{{.GoName}}: r.{{.GoName}},
-{{end}}	}
-}
-
-// from{{.Name}}Request converts from protobuf struct to gin request struct  
-func from{{.Name}}Request(req *{{.Request}}) *{{.Name | lower}}GinRequest {
-	return &{{.Name | lower}}GinRequest{
-{{range .Fields}}		{{.GoName}}: req.{{.GoName}},
 {{end}}	}
 }
 {{end}}
@@ -318,7 +352,7 @@ func buildHTTPRule(g *protogen.GeneratedFile, m *protogen.Method, rule *annotati
 	responseBody = rule.ResponseBody
 	md := buildMethodDesc(g, m, method, path)
 
-	// 解析路径参数
+	// Parse path parameters
 	md.PathParams = extractPathParams(path)
 
 	if method == http.MethodGet || method == http.MethodDelete {
@@ -393,7 +427,7 @@ func buildMethodDesc(g *protogen.GeneratedFile, m *protogen.Method, method, path
 	}
 }
 
-// 辅助函数
+// Helper functions
 func extractPathParams(path string) []string {
 	pattern := regexp.MustCompile(`{([^}]+)}`)
 	matches := pattern.FindAllStringSubmatch(path, -1)
@@ -681,7 +715,7 @@ func hasHTTPRule(services []*protogen.Service) bool {
 	return false
 }
 
-// transformPath 转换参数路由 {xx} --> :xx
+// transformPath converts parameter routes {xx} --> :xx
 func transformPath(path string) string {
 	paths := strings.Split(path, "/")
 	for i, p := range paths {

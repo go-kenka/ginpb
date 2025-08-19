@@ -518,8 +518,10 @@ func main() {
 		},
 	}
 
-	// Register service with operation-specific middleware
-	api.RegisterCompleteExampleServiceHTTPServerWithOperationMiddleware(r, service, operationMiddleware)
+	// Register service with operation-specific middleware using function options
+	api.RegisterCompleteExampleServiceHTTPServer(r, service,
+		api.WithCompleteExampleServiceOperationMiddlewares(operationMiddleware),
+	)
 
 	// Add health check endpoint
 	r.GET("/health", func(c *gin.Context) {

@@ -26,34 +26,45 @@ service := &YourService{}
 // 基础注册（无中间件）
 api.RegisterYourServiceHTTPServer(r, service)
 
-// 带中间件注册
-api.RegisterYourServiceHTTPServerWithMiddleware(
-    r,
-    service,
-    middleware.Logging(),
-    middleware.Recovery(),
-    middleware.CORS(),
+// 带全局中间件注册
+api.RegisterYourServiceHTTPServer(r, service,
+    api.WithYourServiceGlobalMiddleware(
+        middleware.Logging(),
+        middleware.Recovery(),
+        middleware.CORS(),
+    ),
 )
 ```
 
 ### 2. 操作特定中间件
 
 ```go
-// 为特定操作配置中间件
-operationMiddlewares := map[string][]gin.HandlerFunc{
-    api.OperationYourServiceMethodName: {
+// 为单个操作配置中间件
+api.RegisterYourServiceHTTPServer(r, service,
+    api.WithYourServiceOperationMiddleware(
+        api.OperationYourServiceMethodName,
         middleware.BearerAuth(),
         middleware.LoggingWithConfig(middleware.LoggingConfig{
             LogRequest:  true,
             LogResponse: true,
         }),
+    ),
+)
+
+// 批量设置操作中间件
+operationMiddlewares := map[string][]gin.HandlerFunc{
+    api.OperationYourServiceCreateUser: {
+        middleware.BearerAuth(),
+        middleware.Logging(),
+    },
+    api.OperationYourServiceDeleteUser: {
+        middleware.BearerAuth(),
+        middleware.AdminAuth(),
     },
 }
 
-api.RegisterYourServiceHTTPServerWithOperationMiddleware(
-    r,
-    service,
-    operationMiddlewares,
+api.RegisterYourServiceHTTPServer(r, service,
+    api.WithYourServiceOperationMiddlewares(operationMiddlewares),
 )
 ```
 
@@ -181,32 +192,30 @@ r.Use(group.Wrap())
 
 ## 代码生成增强
 
-GinPB 的代码生成器会自动为每个生成的服务创建以下注册函数：
+GinPB 的代码生成器会自动为每个生成的服务创建统一的注册函数和选项函数：
 
-### 标准注册函数
-
-```go
-func RegisterYourServiceHTTPServer(r gin.IRouter, srv YourServiceHTTPServer)
-```
-
-### 带中间件的注册函数
+### 统一注册函数
 
 ```go
-func RegisterYourServiceHTTPServerWithMiddleware(
+// 统一的注册函数，支持函数选项模式
+func RegisterYourServiceHTTPServer(
     r gin.IRouter, 
     srv YourServiceHTTPServer, 
-    middlewares ...gin.HandlerFunc,
+    opts ...YourServiceRegisterOption,
 )
 ```
 
-### 操作特定中间件注册函数
+### 中间件选项函数
 
 ```go
-func RegisterYourServiceHTTPServerWithOperationMiddleware(
-    r gin.IRouter, 
-    srv YourServiceHTTPServer, 
-    middlewares map[string][]gin.HandlerFunc,
-)
+// 全局中间件选项
+func WithYourServiceGlobalMiddleware(middlewares ...gin.HandlerFunc) YourServiceRegisterOption
+
+// 单个操作中间件选项
+func WithYourServiceOperationMiddleware(operation string, middlewares ...gin.HandlerFunc) YourServiceRegisterOption
+
+// 批量操作中间件选项  
+func WithYourServiceOperationMiddlewares(middlewares map[string][]gin.HandlerFunc) YourServiceRegisterOption
 ```
 
 ## 完整示例
@@ -223,42 +232,57 @@ func main() {
     r := gin.Default()
     service := &YourService{}
     
-    // 全局中间件
-    r.Use(middleware.Recovery())
-    
-    // 基础 API（无额外中间件）
-    basicGroup := r.Group("/api/v1")
+    // 方式1: 基础注册（无中间件）
+    basicGroup := r.Group("/api/v1/basic")
     api.RegisterYourServiceHTTPServer(basicGroup, service)
     
-    // 认证 API（需要认证）
-    authGroup := r.Group("/api/v1/auth")
-    api.RegisterYourServiceHTTPServerWithMiddleware(
-        authGroup,
-        service,
-        middleware.BearerAuth(),
-        middleware.LoggingWithConfig(middleware.LoggingConfig{
-            LogRequest:  true,
-            LogResponse: true,
-        }),
+    // 方式2: 全局中间件
+    publicGroup := r.Group("/api/v1/public")
+    api.RegisterYourServiceHTTPServer(publicGroup, service,
+        api.WithYourServiceGlobalMiddleware(
+            middleware.Recovery(),
+            middleware.CORS(),
+            middleware.Logging(),
+        ),
     )
     
-    // 管理 API（操作特定中间件）
+    // 方式3: 操作特定中间件
+    authGroup := r.Group("/api/v1/auth")
+    api.RegisterYourServiceHTTPServer(authGroup, service,
+        api.WithYourServiceOperationMiddleware(
+            api.OperationYourServiceCreateUser,
+            middleware.BearerAuth(),
+            middleware.Logging(),
+        ),
+        api.WithYourServiceOperationMiddleware(
+            api.OperationYourServiceDeleteUser,
+            middleware.BearerAuth(),
+            middleware.AdminAuth(),
+        ),
+    )
+    
+    // 方式4: 混合使用
     adminGroup := r.Group("/api/v1/admin")
     operationMiddlewares := map[string][]gin.HandlerFunc{
         api.OperationYourServiceCreateUser: {
-            adminAuthMiddleware(),
-            auditLogMiddleware(),
+            middleware.AdminAuth(),
+            middleware.AuditLog(),
         },
         api.OperationYourServiceDeleteUser: {
-            adminAuthMiddleware(),
-            confirmationMiddleware(),
-            auditLogMiddleware(),
+            middleware.AdminAuth(),
+            middleware.ConfirmationRequired(),
+            middleware.AuditLog(),
         },
     }
-    api.RegisterYourServiceHTTPServerWithOperationMiddleware(
-        adminGroup,
-        service,
-        operationMiddlewares,
+    
+    api.RegisterYourServiceHTTPServer(adminGroup, service,
+        // 全局中间件（所有操作都会应用）
+        api.WithYourServiceGlobalMiddleware(
+            middleware.Recovery(),
+            middleware.RateLimiting(),
+        ),
+        // 批量操作中间件
+        api.WithYourServiceOperationMiddlewares(operationMiddlewares),
     )
     
     r.Run(":8080")
@@ -309,8 +333,10 @@ const (
 
 ## 最佳实践
 
-1. **分层使用中间件**: 全局 → 组级别 → 操作级别
-2. **合理使用日志**: 在开发环境启用详细日志，生产环境关闭请求/响应日志
-3. **认证中间件**: 将认证中间件应用在需要的操作上，避免全局应用
-4. **错误处理**: 使用 Recovery 中间件防止 panic 导致服务崩溃
-5. **性能监控**: 使用自定义中间件进行性能监控和指标收集
+1. **分层使用中间件**: 全局中间件 → 操作特定中间件，优先级从低到高
+2. **函数选项组合**: 灵活组合多种中间件选项，满足不同场景需求  
+3. **合理使用日志**: 在开发环境启用详细日志，生产环境关闭请求/响应日志
+4. **认证中间件**: 将认证中间件应用在需要的操作上，避免全局应用
+5. **错误处理**: 使用 Recovery 中间件防止 panic 导致服务崩溃
+6. **性能监控**: 使用自定义中间件进行性能监控和指标收集
+

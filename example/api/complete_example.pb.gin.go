@@ -60,111 +60,83 @@ type CompleteExampleServiceHTTPServer interface {
 	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
 }
 
-func RegisterCompleteExampleServiceHTTPServer(r gin.IRouter, srv CompleteExampleServiceHTTPServer) {
-	r.GET("/api/v1/users", _CompleteExampleService_ListUsers0_HTTP_Handler(srv))
-	r.GET("/api/v1/users/:user_id", _CompleteExampleService_GetUser0_HTTP_Handler(srv))
-	r.GET("/api/v1/users/search", _CompleteExampleService_SearchUsers0_HTTP_Handler(srv))
-	r.POST("/api/v1/users", _CompleteExampleService_CreateUser0_HTTP_Handler(srv))
-	r.POST("/api/v1/users/register", _CompleteExampleService_RegisterUser0_HTTP_Handler(srv))
-	r.POST("/api/v1/users/:user_id/posts", _CompleteExampleService_CreatePost0_HTTP_Handler(srv))
-	r.PUT("/api/v1/users/:user_id", _CompleteExampleService_UpdateUser0_HTTP_Handler(srv))
-	r.PUT("/api/v1/users/:user_id/profile", _CompleteExampleService_UpdateProfile0_HTTP_Handler(srv))
-	r.PATCH("/api/v1/users/:user_id", _CompleteExampleService_PatchUser0_HTTP_Handler(srv))
-	r.DELETE("/api/v1/users/:user_id", _CompleteExampleService_DeleteUser0_HTTP_Handler(srv))
-	r.DELETE("/api/v1/users", _CompleteExampleService_BatchDeleteUsers0_HTTP_Handler(srv))
-	r.GET("/api/v1/users/:user_id/posts/:post_id/comments", _CompleteExampleService_GetPostComments0_HTTP_Handler(srv))
-	r.GET("/api/v1/profiles/:user_id", _CompleteExampleService_GetUserProfile0_HTTP_Handler(srv))
-	r.GET("/api/v1/users/:user_id/profile", _CompleteExampleService_GetUserProfile1_HTTP_Handler(srv))
+// RegisterOption defines registration options
+type CompleteExampleServiceRegisterOption func(*CompleteExampleServiceRegisterOptions)
+
+// CompleteExampleServiceRegisterOptions registration configuration options
+type CompleteExampleServiceRegisterOptions struct {
+	globalMiddlewares    []gin.HandlerFunc
+	operationMiddlewares map[string][]gin.HandlerFunc
 }
 
-func RegisterCompleteExampleServiceHTTPServerWithMiddleware(r gin.IRouter, srv CompleteExampleServiceHTTPServer, middlewares ...gin.HandlerFunc) {
-	r.GET("/api/v1/users", append(middlewares, _CompleteExampleService_ListUsers0_HTTP_Handler(srv))...)
-	r.GET("/api/v1/users/:user_id", append(middlewares, _CompleteExampleService_GetUser0_HTTP_Handler(srv))...)
-	r.GET("/api/v1/users/search", append(middlewares, _CompleteExampleService_SearchUsers0_HTTP_Handler(srv))...)
-	r.POST("/api/v1/users", append(middlewares, _CompleteExampleService_CreateUser0_HTTP_Handler(srv))...)
-	r.POST("/api/v1/users/register", append(middlewares, _CompleteExampleService_RegisterUser0_HTTP_Handler(srv))...)
-	r.POST("/api/v1/users/:user_id/posts", append(middlewares, _CompleteExampleService_CreatePost0_HTTP_Handler(srv))...)
-	r.PUT("/api/v1/users/:user_id", append(middlewares, _CompleteExampleService_UpdateUser0_HTTP_Handler(srv))...)
-	r.PUT("/api/v1/users/:user_id/profile", append(middlewares, _CompleteExampleService_UpdateProfile0_HTTP_Handler(srv))...)
-	r.PATCH("/api/v1/users/:user_id", append(middlewares, _CompleteExampleService_PatchUser0_HTTP_Handler(srv))...)
-	r.DELETE("/api/v1/users/:user_id", append(middlewares, _CompleteExampleService_DeleteUser0_HTTP_Handler(srv))...)
-	r.DELETE("/api/v1/users", append(middlewares, _CompleteExampleService_BatchDeleteUsers0_HTTP_Handler(srv))...)
-	r.GET("/api/v1/users/:user_id/posts/:post_id/comments", append(middlewares, _CompleteExampleService_GetPostComments0_HTTP_Handler(srv))...)
-	r.GET("/api/v1/profiles/:user_id", append(middlewares, _CompleteExampleService_GetUserProfile0_HTTP_Handler(srv))...)
-	r.GET("/api/v1/users/:user_id/profile", append(middlewares, _CompleteExampleService_GetUserProfile1_HTTP_Handler(srv))...)
+// WithGlobalMiddleware adds global middleware
+func WithCompleteExampleServiceGlobalMiddleware(middlewares ...gin.HandlerFunc) CompleteExampleServiceRegisterOption {
+	return func(o *CompleteExampleServiceRegisterOptions) {
+		o.globalMiddlewares = append(o.globalMiddlewares, middlewares...)
+	}
 }
 
-func RegisterCompleteExampleServiceHTTPServerWithOperationMiddleware(r gin.IRouter, srv CompleteExampleServiceHTTPServer, middlewares map[string][]gin.HandlerFunc) {
-	if mws, exists := middlewares[OperationCompleteExampleServiceListUsers]; exists {
-		r.GET("/api/v1/users", append(mws, _CompleteExampleService_ListUsers0_HTTP_Handler(srv))...)
-	} else {
-		r.GET("/api/v1/users", _CompleteExampleService_ListUsers0_HTTP_Handler(srv))
+// WithOperationMiddleware adds middleware for specific operation
+func WithCompleteExampleServiceOperationMiddleware(operation string, middlewares ...gin.HandlerFunc) CompleteExampleServiceRegisterOption {
+	return func(o *CompleteExampleServiceRegisterOptions) {
+		if o.operationMiddlewares == nil {
+			o.operationMiddlewares = make(map[string][]gin.HandlerFunc)
+		}
+		o.operationMiddlewares[operation] = append(o.operationMiddlewares[operation], middlewares...)
 	}
-	if mws, exists := middlewares[OperationCompleteExampleServiceGetUser]; exists {
-		r.GET("/api/v1/users/:user_id", append(mws, _CompleteExampleService_GetUser0_HTTP_Handler(srv))...)
-	} else {
-		r.GET("/api/v1/users/:user_id", _CompleteExampleService_GetUser0_HTTP_Handler(srv))
+}
+
+// WithOperationMiddlewares sets middleware for multiple operations
+func WithCompleteExampleServiceOperationMiddlewares(middlewares map[string][]gin.HandlerFunc) CompleteExampleServiceRegisterOption {
+	return func(o *CompleteExampleServiceRegisterOptions) {
+		if o.operationMiddlewares == nil {
+			o.operationMiddlewares = make(map[string][]gin.HandlerFunc)
+		}
+		for operation, mws := range middlewares {
+			o.operationMiddlewares[operation] = append(o.operationMiddlewares[operation], mws...)
+		}
 	}
-	if mws, exists := middlewares[OperationCompleteExampleServiceSearchUsers]; exists {
-		r.GET("/api/v1/users/search", append(mws, _CompleteExampleService_SearchUsers0_HTTP_Handler(srv))...)
-	} else {
-		r.GET("/api/v1/users/search", _CompleteExampleService_SearchUsers0_HTTP_Handler(srv))
+}
+
+// RegisterCompleteExampleServiceHTTPServer registers HTTP server with function options pattern
+func RegisterCompleteExampleServiceHTTPServer(r gin.IRouter, srv CompleteExampleServiceHTTPServer, opts ...CompleteExampleServiceRegisterOption) {
+	options := &CompleteExampleServiceRegisterOptions{}
+	for _, opt := range opts {
+		opt(options)
 	}
-	if mws, exists := middlewares[OperationCompleteExampleServiceCreateUser]; exists {
-		r.POST("/api/v1/users", append(mws, _CompleteExampleService_CreateUser0_HTTP_Handler(srv))...)
-	} else {
-		r.POST("/api/v1/users", _CompleteExampleService_CreateUser0_HTTP_Handler(srv))
+
+	// Helper function to register route with middleware support
+	registerRoute := func(method, path, operation string, handler gin.HandlerFunc) {
+		var finalHandlers []gin.HandlerFunc
+
+		// Add global middlewares first
+		finalHandlers = append(finalHandlers, options.globalMiddlewares...)
+
+		// Add operation-specific middlewares
+		if operationMws, exists := options.operationMiddlewares[operation]; exists {
+			finalHandlers = append(finalHandlers, operationMws...)
+		}
+
+		// Add the handler at the end
+		finalHandlers = append(finalHandlers, handler)
+
+		// Register the route
+		r.Handle(method, path, finalHandlers...)
 	}
-	if mws, exists := middlewares[OperationCompleteExampleServiceRegisterUser]; exists {
-		r.POST("/api/v1/users/register", append(mws, _CompleteExampleService_RegisterUser0_HTTP_Handler(srv))...)
-	} else {
-		r.POST("/api/v1/users/register", _CompleteExampleService_RegisterUser0_HTTP_Handler(srv))
-	}
-	if mws, exists := middlewares[OperationCompleteExampleServiceCreatePost]; exists {
-		r.POST("/api/v1/users/:user_id/posts", append(mws, _CompleteExampleService_CreatePost0_HTTP_Handler(srv))...)
-	} else {
-		r.POST("/api/v1/users/:user_id/posts", _CompleteExampleService_CreatePost0_HTTP_Handler(srv))
-	}
-	if mws, exists := middlewares[OperationCompleteExampleServiceUpdateUser]; exists {
-		r.PUT("/api/v1/users/:user_id", append(mws, _CompleteExampleService_UpdateUser0_HTTP_Handler(srv))...)
-	} else {
-		r.PUT("/api/v1/users/:user_id", _CompleteExampleService_UpdateUser0_HTTP_Handler(srv))
-	}
-	if mws, exists := middlewares[OperationCompleteExampleServiceUpdateProfile]; exists {
-		r.PUT("/api/v1/users/:user_id/profile", append(mws, _CompleteExampleService_UpdateProfile0_HTTP_Handler(srv))...)
-	} else {
-		r.PUT("/api/v1/users/:user_id/profile", _CompleteExampleService_UpdateProfile0_HTTP_Handler(srv))
-	}
-	if mws, exists := middlewares[OperationCompleteExampleServicePatchUser]; exists {
-		r.PATCH("/api/v1/users/:user_id", append(mws, _CompleteExampleService_PatchUser0_HTTP_Handler(srv))...)
-	} else {
-		r.PATCH("/api/v1/users/:user_id", _CompleteExampleService_PatchUser0_HTTP_Handler(srv))
-	}
-	if mws, exists := middlewares[OperationCompleteExampleServiceDeleteUser]; exists {
-		r.DELETE("/api/v1/users/:user_id", append(mws, _CompleteExampleService_DeleteUser0_HTTP_Handler(srv))...)
-	} else {
-		r.DELETE("/api/v1/users/:user_id", _CompleteExampleService_DeleteUser0_HTTP_Handler(srv))
-	}
-	if mws, exists := middlewares[OperationCompleteExampleServiceBatchDeleteUsers]; exists {
-		r.DELETE("/api/v1/users", append(mws, _CompleteExampleService_BatchDeleteUsers0_HTTP_Handler(srv))...)
-	} else {
-		r.DELETE("/api/v1/users", _CompleteExampleService_BatchDeleteUsers0_HTTP_Handler(srv))
-	}
-	if mws, exists := middlewares[OperationCompleteExampleServiceGetPostComments]; exists {
-		r.GET("/api/v1/users/:user_id/posts/:post_id/comments", append(mws, _CompleteExampleService_GetPostComments0_HTTP_Handler(srv))...)
-	} else {
-		r.GET("/api/v1/users/:user_id/posts/:post_id/comments", _CompleteExampleService_GetPostComments0_HTTP_Handler(srv))
-	}
-	if mws, exists := middlewares[OperationCompleteExampleServiceGetUserProfile]; exists {
-		r.GET("/api/v1/profiles/:user_id", append(mws, _CompleteExampleService_GetUserProfile0_HTTP_Handler(srv))...)
-	} else {
-		r.GET("/api/v1/profiles/:user_id", _CompleteExampleService_GetUserProfile0_HTTP_Handler(srv))
-	}
-	if mws, exists := middlewares[OperationCompleteExampleServiceGetUserProfile]; exists {
-		r.GET("/api/v1/users/:user_id/profile", append(mws, _CompleteExampleService_GetUserProfile1_HTTP_Handler(srv))...)
-	} else {
-		r.GET("/api/v1/users/:user_id/profile", _CompleteExampleService_GetUserProfile1_HTTP_Handler(srv))
-	}
+	registerRoute("GET", "/api/v1/users", OperationCompleteExampleServiceListUsers, _CompleteExampleService_ListUsers0_HTTP_Handler(srv))
+	registerRoute("GET", "/api/v1/users/:user_id", OperationCompleteExampleServiceGetUser, _CompleteExampleService_GetUser0_HTTP_Handler(srv))
+	registerRoute("GET", "/api/v1/users/search", OperationCompleteExampleServiceSearchUsers, _CompleteExampleService_SearchUsers0_HTTP_Handler(srv))
+	registerRoute("POST", "/api/v1/users", OperationCompleteExampleServiceCreateUser, _CompleteExampleService_CreateUser0_HTTP_Handler(srv))
+	registerRoute("POST", "/api/v1/users/register", OperationCompleteExampleServiceRegisterUser, _CompleteExampleService_RegisterUser0_HTTP_Handler(srv))
+	registerRoute("POST", "/api/v1/users/:user_id/posts", OperationCompleteExampleServiceCreatePost, _CompleteExampleService_CreatePost0_HTTP_Handler(srv))
+	registerRoute("PUT", "/api/v1/users/:user_id", OperationCompleteExampleServiceUpdateUser, _CompleteExampleService_UpdateUser0_HTTP_Handler(srv))
+	registerRoute("PUT", "/api/v1/users/:user_id/profile", OperationCompleteExampleServiceUpdateProfile, _CompleteExampleService_UpdateProfile0_HTTP_Handler(srv))
+	registerRoute("PATCH", "/api/v1/users/:user_id", OperationCompleteExampleServicePatchUser, _CompleteExampleService_PatchUser0_HTTP_Handler(srv))
+	registerRoute("DELETE", "/api/v1/users/:user_id", OperationCompleteExampleServiceDeleteUser, _CompleteExampleService_DeleteUser0_HTTP_Handler(srv))
+	registerRoute("DELETE", "/api/v1/users", OperationCompleteExampleServiceBatchDeleteUsers, _CompleteExampleService_BatchDeleteUsers0_HTTP_Handler(srv))
+	registerRoute("GET", "/api/v1/users/:user_id/posts/:post_id/comments", OperationCompleteExampleServiceGetPostComments, _CompleteExampleService_GetPostComments0_HTTP_Handler(srv))
+	registerRoute("GET", "/api/v1/profiles/:user_id", OperationCompleteExampleServiceGetUserProfile, _CompleteExampleService_GetUserProfile0_HTTP_Handler(srv))
+	registerRoute("GET", "/api/v1/users/:user_id/profile", OperationCompleteExampleServiceGetUserProfile, _CompleteExampleService_GetUserProfile1_HTTP_Handler(srv))
 }
 
 func _CompleteExampleService_ListUsers0_HTTP_Handler(srv CompleteExampleServiceHTTPServer) func(ctx *gin.Context) {
@@ -172,10 +144,9 @@ func _CompleteExampleService_ListUsers0_HTTP_Handler(srv CompleteExampleServiceH
 		// Set operation for middleware
 		ctx.Set("operation", OperationCompleteExampleServiceListUsers)
 
-		var ginReq listusersGinRequest
+		var ginReq _ListUsersGinRequest
 		// query
 		if err := ctx.BindQuery(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
@@ -183,19 +154,7 @@ func _CompleteExampleService_ListUsers0_HTTP_Handler(srv CompleteExampleServiceH
 		// Convert gin request to protobuf request
 		in := ginReq.toListUsersRequest()
 
-		// Custom field tags detected:
-
-		// Field Page: binding:"min=1" form:"page" json:"page"
-		// Field PageSize: binding:"min=1,max=100" form:"page_size" json:"page_size"
-		// Field SortBy: binding:"oneof=id name email created_at" form:"sort_by" json:"sort_by"
-		// Field SortOrder: binding:"oneof=asc desc" form:"sort_order" json:"sort_order"
-		// Field Status: form:"status" json:"status"
-		// Field Roles: form:"roles" json:"roles"
-		// Field IncludeDeleted: form:"include_deleted" json:"include_deleted"
-		// Field IncludeStats: form:"include_stats" json:"include_stats"
-		// Field CreatedAfter: binding:"datetime=2006-01-02" form:"created_after" json:"created_after"
-		// Field CreatedBefore: binding:"datetime=2006-01-02" form:"created_before" json:"created_before"
-		// header,ip等常用信息, form表单信息,包括上传文件
+		// Use new context for metadata passing, including request, writer and route params
 		newCtx := metadata.NewContext(ctx)
 		reply, err := srv.ListUsers(newCtx, in)
 		if err != nil {
@@ -211,16 +170,15 @@ func _CompleteExampleService_GetUser0_HTTP_Handler(srv CompleteExampleServiceHTT
 		// Set operation for middleware
 		ctx.Set("operation", OperationCompleteExampleServiceGetUser)
 
-		var ginReq getuserGinRequest
+		var ginReq _GetUserGinRequest
 		// query
 		if err := ctx.BindQuery(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
+
 		// params
 		if err := ctx.BindUri(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
@@ -228,13 +186,7 @@ func _CompleteExampleService_GetUser0_HTTP_Handler(srv CompleteExampleServiceHTT
 		// Convert gin request to protobuf request
 		in := ginReq.toGetUserRequest()
 
-		// Custom field tags detected:
-
-		// Field UserId: binding:"required,uuid" json:"user_id" uri:"user_id"
-		// Field Fields: form:"fields" json:"fields"
-		// Field IncludeProfile: form:"include_profile" json:"include_profile"
-		// Field IncludePosts: form:"include_posts" json:"include_posts"
-		// header,ip等常用信息, form表单信息,包括上传文件
+		// Use new context for metadata passing, including request, writer and route params
 		newCtx := metadata.NewContext(ctx)
 		reply, err := srv.GetUser(newCtx, in)
 		if err != nil {
@@ -250,10 +202,9 @@ func _CompleteExampleService_SearchUsers0_HTTP_Handler(srv CompleteExampleServic
 		// Set operation for middleware
 		ctx.Set("operation", OperationCompleteExampleServiceSearchUsers)
 
-		var ginReq searchusersGinRequest
+		var ginReq _SearchUsersGinRequest
 		// query
 		if err := ctx.BindQuery(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
@@ -261,23 +212,7 @@ func _CompleteExampleService_SearchUsers0_HTTP_Handler(srv CompleteExampleServic
 		// Convert gin request to protobuf request
 		in := ginReq.toSearchUsersRequest()
 
-		// Custom field tags detected:
-
-		// Field Query: binding:"required,min=2,max=100" form:"q" json:"query"
-		// Field SearchFields: form:"search_fields" json:"search_fields"
-		// Field Limit: binding:"min=1,max=50" form:"limit" json:"limit"
-		// Field ClientId: binding:"required" header:"X-Client-ID" json:"client_id"
-		// Field RequestId: header:"X-Request-ID" json:"request_id"
-		// Field UserAgent: header:"User-Agent" json:"user_agent"
-		// Field ApiKey: binding:"required,min=32,max=64" header:"X-API-Key" json:"api_key"
-		// Field Latitude: binding:"min=-90,max=90" form:"lat" json:"latitude"
-		// Field Longitude: binding:"min=-180,max=180" form:"lng" json:"longitude"
-		// Field RadiusKm: binding:"min=1,max=1000" form:"radius" json:"radius_km"
-		// Field MinAge: binding:"min=0,max=150" form:"min_age" json:"min_age"
-		// Field MaxAge: binding:"min=0,max=150" form:"max_age" json:"max_age"
-		// Field Country: form:"country" json:"country"
-		// Field City: form:"city" json:"city"
-		// header,ip等常用信息, form表单信息,包括上传文件
+		// Use new context for metadata passing, including request, writer and route params
 		newCtx := metadata.NewContext(ctx)
 		reply, err := srv.SearchUsers(newCtx, in)
 		if err != nil {
@@ -293,10 +228,9 @@ func _CompleteExampleService_CreateUser0_HTTP_Handler(srv CompleteExampleService
 		// Set operation for middleware
 		ctx.Set("operation", OperationCompleteExampleServiceCreateUser)
 
-		var ginReq createuserGinRequest
+		var ginReq _CreateUserGinRequest
 		// body binding with automatic Content-Type detection
 		if err := binding1.BindByContentType(ctx, &ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
@@ -304,27 +238,7 @@ func _CompleteExampleService_CreateUser0_HTTP_Handler(srv CompleteExampleService
 		// Convert gin request to protobuf request
 		in := ginReq.toCreateUserRequest()
 
-		// Custom field tags detected:
-
-		// Field Username: binding:"required,min=3,max=50,alphanum" json:"username"
-		// Field Email: binding:"required,email" json:"email"
-		// Field Password: binding:"required,min=8,max=128" json:"password"
-		// Field FullName: binding:"min=2,max=100" json:"full_name"
-		// Field Phone: binding:"len=11,numeric" json:"phone"
-		// Field Age: binding:"min=13,max=120" json:"age"
-		// Field Gender: binding:"oneof=male female other" json:"gender"
-		// Field Bio: binding:"max=500" json:"bio"
-		// Field Address: json:"address"
-		// Field Hobbies: binding:"min=1,max=10" json:"hobbies"
-		// Field Languages: binding:"max=20" json:"languages"
-		// Field SocialLinks: json:"social_links"
-		// Field Preferences: json:"preferences"
-		// Field Settings: json:"settings"
-		// Field AgreeTerms: binding:"required,eq=true" json:"agree_terms"
-		// Field SubscribeNewsletter: json:"subscribe_newsletter"
-		// Field ReferralCode: json:"referral_code" xml:"referral_format"
-		// Field Tags: json:"tags" xml:"max_length:20"
-		// header,ip等常用信息, form表单信息,包括上传文件
+		// Use new context for metadata passing, including request, writer and route params
 		newCtx := metadata.NewContext(ctx)
 		reply, err := srv.CreateUser(newCtx, in)
 		if err != nil {
@@ -340,10 +254,9 @@ func _CompleteExampleService_RegisterUser0_HTTP_Handler(srv CompleteExampleServi
 		// Set operation for middleware
 		ctx.Set("operation", OperationCompleteExampleServiceRegisterUser)
 
-		var ginReq registeruserGinRequest
+		var ginReq _RegisterUserGinRequest
 		// body binding with automatic Content-Type detection
 		if err := binding1.BindByContentType(ctx, &ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
@@ -351,30 +264,7 @@ func _CompleteExampleService_RegisterUser0_HTTP_Handler(srv CompleteExampleServi
 		// Convert gin request to protobuf request
 		in := ginReq.toRegisterUserRequest()
 
-		// Custom field tags detected:
-
-		// Field Username: binding:"required,min=3,max=30,alphanum" form:"username" json:"username"
-		// Field Email: binding:"required,email" form:"email" json:"email"
-		// Field Password: binding:"required,min=8" form:"password" json:"password"
-		// Field ConfirmPassword: binding:"required,eqfield=Password" form:"confirm_password" json:"confirm_password"
-		// Field FirstName: binding:"required,min=2,max=50" form:"first_name" json:"first_name"
-		// Field LastName: binding:"required,min=2,max=50" form:"last_name" json:"last_name"
-		// Field BirthDate: binding:"required,datetime=2006-01-02" form:"birth_date" json:"birth_date"
-		// Field Phone: binding:"required,len=11,numeric" form:"phone" json:"phone"
-		// Field Gender: binding:"oneof=male female other prefer_not_to_say" form:"gender" json:"gender"
-		// Field Country: binding:"required,min=2,max=2" form:"country" json:"country"
-		// Field Timezone: binding:"required" form:"timezone" json:"timezone"
-		// Field Interests: form:"interests" json:"interests"
-		// Field Skills: form:"skills" json:"skills"
-		// Field NewsletterFrequency: binding:"oneof=never daily weekly monthly" form:"newsletter" json:"newsletter_frequency"
-		// Field MarketingEmails: form:"marketing_emails" json:"marketing_emails"
-		// Field CaptchaResponse: binding:"required,len=6" form:"captcha" json:"captcha_response"
-		// Field InviteCode: form:"invite_code" json:"invite_code"
-		// Field UtmSource: form:"utm_source" json:"utm_source"
-		// Field UtmMedium: form:"utm_medium" json:"utm_medium"
-		// Field UtmCampaign: form:"utm_campaign" json:"utm_campaign"
-		// Field ReferrerUrl: form:"referrer" json:"referrer_url"
-		// header,ip等常用信息, form表单信息,包括上传文件
+		// Use new context for metadata passing, including request, writer and route params
 		newCtx := metadata.NewContext(ctx)
 		reply, err := srv.RegisterUser(newCtx, in)
 		if err != nil {
@@ -390,16 +280,15 @@ func _CompleteExampleService_CreatePost0_HTTP_Handler(srv CompleteExampleService
 		// Set operation for middleware
 		ctx.Set("operation", OperationCompleteExampleServiceCreatePost)
 
-		var ginReq createpostGinRequest
+		var ginReq _CreatePostGinRequest
 		// body binding with automatic Content-Type detection
 		if err := binding1.BindByContentType(ctx, &ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
+
 		// params
 		if err := ctx.BindUri(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
@@ -407,33 +296,7 @@ func _CompleteExampleService_CreatePost0_HTTP_Handler(srv CompleteExampleService
 		// Convert gin request to protobuf request
 		in := ginReq.toCreatePostRequest()
 
-		// Custom field tags detected:
-
-		// Field UserId: binding:"required,uuid" json:"user_id" uri:"user_id"
-		// Field Draft: form:"draft" json:"draft"
-		// Field Source: binding:"oneof=web mobile app api" form:"source" json:"source"
-		// Field NotifyFollowers: form:"notify_followers" json:"notify_followers"
-		// Field Authorization: binding:"required,startswith=Bearer " header:"Authorization" json:"authorization"
-		// Field ContentType: binding:"required" header:"Content-Type" json:"content_type"
-		// Field UserAgent: header:"User-Agent" json:"user_agent"
-		// Field ClientVersion: header:"X-Client-Version" json:"client_version"
-		// Field RequestId: header:"X-Request-ID" json:"request_id"
-		// Field Title: binding:"required,min=5,max=200" json:"title"
-		// Field Content: binding:"required,min=50,max=50000" json:"content"
-		// Field Excerpt: binding:"max=500" json:"excerpt"
-		// Field Category: binding:"required" json:"category"
-		// Field Tags: binding:"min=1,max=10" json:"tags"
-		// Field Visibility: binding:"required,oneof=public private draft" json:"visibility"
-		// Field AllowComments: json:"allow_comments"
-		// Field PublishAt: binding:"datetime=2006-01-02T15:04:05Z07:00" json:"publish_at"
-		// Field MetaTitle: binding:"max=60" json:"meta_title"
-		// Field MetaDescription: binding:"max=160" json:"meta_description"
-		// Field SeoKeywords: binding:"max=10" json:"seo_keywords"
-		// Field ImageUrls: binding:"max=20" json:"images"
-		// Field AttachmentUrls: binding:"max=10" json:"attachments"
-		// Field CustomFields: json:"custom_fields" xml:"validate:post_custom_fields"
-		// Field ExternalId: json:"external_id" xml:"external_id_format"
-		// header,ip等常用信息, form表单信息,包括上传文件
+		// Use new context for metadata passing, including request, writer and route params
 		newCtx := metadata.NewContext(ctx)
 		reply, err := srv.CreatePost(newCtx, in)
 		if err != nil {
@@ -449,16 +312,15 @@ func _CompleteExampleService_UpdateUser0_HTTP_Handler(srv CompleteExampleService
 		// Set operation for middleware
 		ctx.Set("operation", OperationCompleteExampleServiceUpdateUser)
 
-		var ginReq updateuserGinRequest
+		var ginReq _UpdateUserGinRequest
 		// body binding with automatic Content-Type detection
 		if err := binding1.BindByContentType(ctx, &ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
+
 		// params
 		if err := ctx.BindUri(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
@@ -466,27 +328,7 @@ func _CompleteExampleService_UpdateUser0_HTTP_Handler(srv CompleteExampleService
 		// Convert gin request to protobuf request
 		in := ginReq.toUpdateUserRequest()
 
-		// Custom field tags detected:
-
-		// Field UserId: binding:"required,uuid" json:"user_id" uri:"user_id"
-		// Field SendNotification: form:"send_notification" json:"send_notification"
-		// Field UpdateReason: form:"reason" json:"update_reason"
-		// Field IfMatch: header:"If-Match" json:"if_match"
-		// Field Authorization: binding:"required" header:"Authorization" json:"authorization"
-		// Field Username: binding:"required,min=3,max=50" json:"username"
-		// Field Email: binding:"required,email" json:"email"
-		// Field FullName: binding:"required,min=2,max=100" json:"full_name"
-		// Field Phone: binding:"len=11,numeric" json:"phone"
-		// Field Age: binding:"min=13,max=120" json:"age"
-		// Field Bio: binding:"max=1000" json:"bio"
-		// Field Status: binding:"required,oneof=active inactive suspended banned" json:"status"
-		// Field Roles: binding:"min=1" json:"roles"
-		// Field Address: json:"address"
-		// Field SocialLinks: json:"social_links"
-		// Field Settings: json:"settings"
-		// Field UpdatedAt: binding:"required,datetime=2006-01-02T15:04:05Z07:00" json:"updated_at"
-		// Field Version: binding:"required,min=1" json:"version"
-		// header,ip等常用信息, form表单信息,包括上传文件
+		// Use new context for metadata passing, including request, writer and route params
 		newCtx := metadata.NewContext(ctx)
 		reply, err := srv.UpdateUser(newCtx, in)
 		if err != nil {
@@ -502,22 +344,20 @@ func _CompleteExampleService_UpdateProfile0_HTTP_Handler(srv CompleteExampleServ
 		// Set operation for middleware
 		ctx.Set("operation", OperationCompleteExampleServiceUpdateProfile)
 
-		var ginReq updateprofileGinRequest
+		var ginReq _UpdateProfileGinRequest
 		// body binding with automatic Content-Type detection
 		if err := binding1.BindByContentType(ctx, &ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
 		// query
 		if err := ctx.BindQuery(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
+
 		// params
 		if err := ctx.BindUri(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
@@ -525,11 +365,7 @@ func _CompleteExampleService_UpdateProfile0_HTTP_Handler(srv CompleteExampleServ
 		// Convert gin request to protobuf request
 		in := ginReq.toUpdateProfileRequest()
 
-		// Custom field tags detected:
-
-		// Field UserId: binding:"required,uuid" json:"user_id" uri:"user_id"
-		// Field Profile: json:"profile"
-		// header,ip等常用信息, form表单信息,包括上传文件
+		// Use new context for metadata passing, including request, writer and route params
 		newCtx := metadata.NewContext(ctx)
 		reply, err := srv.UpdateProfile(newCtx, in)
 		if err != nil {
@@ -545,16 +381,15 @@ func _CompleteExampleService_PatchUser0_HTTP_Handler(srv CompleteExampleServiceH
 		// Set operation for middleware
 		ctx.Set("operation", OperationCompleteExampleServicePatchUser)
 
-		var ginReq patchuserGinRequest
+		var ginReq _PatchUserGinRequest
 		// body binding with automatic Content-Type detection
 		if err := binding1.BindByContentType(ctx, &ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
+
 		// params
 		if err := ctx.BindUri(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
@@ -562,29 +397,7 @@ func _CompleteExampleService_PatchUser0_HTTP_Handler(srv CompleteExampleServiceH
 		// Convert gin request to protobuf request
 		in := ginReq.toPatchUserRequest()
 
-		// Custom field tags detected:
-
-		// Field UserId: binding:"required,uuid" json:"user_id" uri:"user_id"
-		// Field IfMatch: header:"If-Match" json:"if_match"
-		// Field IfUnmodifiedSince: header:"If-Unmodified-Since" json:"if_unmodified_since"
-		// Field Authorization: binding:"required" header:"Authorization" json:"authorization"
-		// Field PatchSource: header:"X-Patch-Source" json:"patch_source"
-		// Field Username: binding:"min=3,max=50" json:"username"
-		// Field Email: binding:"email" json:"email"
-		// Field FullName: binding:"min=2,max=100" json:"full_name"
-		// Field Phone: binding:"len=11,numeric" json:"phone"
-		// Field Bio: binding:"max=1000" json:"bio"
-		// Field Status: binding:"oneof=active inactive suspended" json:"status"
-		// Field ProfilePatches: json:"profile_patches"
-		// Field SettingsPatches: json:"settings_patches"
-		// Field AddressPatches: json:"address_patches"
-		// Field AddRoles: json:"add_roles"
-		// Field RemoveRoles: json:"remove_roles"
-		// Field AddTags: json:"add_tags"
-		// Field RemoveTags: json:"remove_tags"
-		// Field PatchReason: binding:"max=200" json:"patch_reason"
-		// Field PatchMetadata: json:"patch_metadata"
-		// header,ip等常用信息, form表单信息,包括上传文件
+		// Use new context for metadata passing, including request, writer and route params
 		newCtx := metadata.NewContext(ctx)
 		reply, err := srv.PatchUser(newCtx, in)
 		if err != nil {
@@ -600,16 +413,15 @@ func _CompleteExampleService_DeleteUser0_HTTP_Handler(srv CompleteExampleService
 		// Set operation for middleware
 		ctx.Set("operation", OperationCompleteExampleServiceDeleteUser)
 
-		var ginReq deleteuserGinRequest
+		var ginReq _DeleteUserGinRequest
 		// query
 		if err := ctx.BindQuery(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
+
 		// params
 		if err := ctx.BindUri(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
@@ -617,17 +429,7 @@ func _CompleteExampleService_DeleteUser0_HTTP_Handler(srv CompleteExampleService
 		// Convert gin request to protobuf request
 		in := ginReq.toDeleteUserRequest()
 
-		// Custom field tags detected:
-
-		// Field UserId: binding:"required,uuid" json:"user_id" uri:"user_id"
-		// Field HardDelete: form:"hard_delete" json:"hard_delete"
-		// Field DeleteReason: binding:"max=500" form:"reason" json:"delete_reason"
-		// Field TransferData: form:"transfer_data" json:"transfer_data"
-		// Field TransferToUser: binding:"uuid" form:"transfer_to" json:"transfer_to_user"
-		// Field Confirmation: binding:"required,eq=DELETE" header:"X-Confirm-Delete" json:"confirmation"
-		// Field Authorization: binding:"required" header:"Authorization" json:"authorization"
-		// Field AdminToken: header:"X-Admin-Token" json:"admin_token"
-		// header,ip等常用信息, form表单信息,包括上传文件
+		// Use new context for metadata passing, including request, writer and route params
 		newCtx := metadata.NewContext(ctx)
 		reply, err := srv.DeleteUser(newCtx, in)
 		if err != nil {
@@ -643,10 +445,9 @@ func _CompleteExampleService_BatchDeleteUsers0_HTTP_Handler(srv CompleteExampleS
 		// Set operation for middleware
 		ctx.Set("operation", OperationCompleteExampleServiceBatchDeleteUsers)
 
-		var ginReq batchdeleteusersGinRequest
+		var ginReq _BatchDeleteUsersGinRequest
 		// query
 		if err := ctx.BindQuery(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
@@ -654,15 +455,7 @@ func _CompleteExampleService_BatchDeleteUsers0_HTTP_Handler(srv CompleteExampleS
 		// Convert gin request to protobuf request
 		in := ginReq.toBatchDeleteUsersRequest()
 
-		// Custom field tags detected:
-
-		// Field UserIds: binding:"required,min=1,max=100" form:"user_ids" json:"user_ids"
-		// Field HardDelete: form:"hard_delete" json:"hard_delete"
-		// Field DeleteReason: form:"reason" json:"delete_reason"
-		// Field BatchConfirmation: binding:"required" header:"X-Batch-Confirm" json:"batch_confirmation"
-		// Field Authorization: binding:"required" header:"Authorization" json:"authorization"
-		// Field OperationId: header:"X-Operation-ID" json:"operation_id"
-		// header,ip等常用信息, form表单信息,包括上传文件
+		// Use new context for metadata passing, including request, writer and route params
 		newCtx := metadata.NewContext(ctx)
 		reply, err := srv.BatchDeleteUsers(newCtx, in)
 		if err != nil {
@@ -678,16 +471,15 @@ func _CompleteExampleService_GetPostComments0_HTTP_Handler(srv CompleteExampleSe
 		// Set operation for middleware
 		ctx.Set("operation", OperationCompleteExampleServiceGetPostComments)
 
-		var ginReq getpostcommentsGinRequest
+		var ginReq _GetPostCommentsGinRequest
 		// query
 		if err := ctx.BindQuery(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
+
 		// params
 		if err := ctx.BindUri(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
@@ -695,22 +487,7 @@ func _CompleteExampleService_GetPostComments0_HTTP_Handler(srv CompleteExampleSe
 		// Convert gin request to protobuf request
 		in := ginReq.toGetPostCommentsRequest()
 
-		// Custom field tags detected:
-
-		// Field UserId: binding:"required,uuid" json:"user_id" uri:"user_id"
-		// Field PostId: binding:"required,uuid" json:"post_id" uri:"post_id"
-		// Field Page: binding:"min=1" form:"page" json:"page"
-		// Field PerPage: binding:"min=1,max=100" form:"per_page" json:"per_page"
-		// Field Sort: binding:"oneof=created_at updated_at likes replies" form:"sort" json:"sort"
-		// Field Order: binding:"oneof=asc desc" form:"order" json:"order"
-		// Field Status: binding:"oneof=all published hidden deleted" form:"status" json:"status"
-		// Field IncludeReplies: form:"include_replies" json:"include_replies"
-		// Field IncludeHidden: form:"include_hidden" json:"include_hidden"
-		// Field Since: binding:"datetime=2006-01-02T15:04:05Z07:00" form:"since" json:"since"
-		// Field Until: binding:"datetime=2006-01-02T15:04:05Z07:00" form:"until" json:"until"
-		// Field UserContext: header:"X-User-Context" json:"user_context"
-		// Field ClientTimezone: header:"X-Client-Timezone" json:"client_timezone"
-		// header,ip等常用信息, form表单信息,包括上传文件
+		// Use new context for metadata passing, including request, writer and route params
 		newCtx := metadata.NewContext(ctx)
 		reply, err := srv.GetPostComments(newCtx, in)
 		if err != nil {
@@ -726,16 +503,15 @@ func _CompleteExampleService_GetUserProfile0_HTTP_Handler(srv CompleteExampleSer
 		// Set operation for middleware
 		ctx.Set("operation", OperationCompleteExampleServiceGetUserProfile)
 
-		var ginReq getuserprofileGinRequest
+		var ginReq _GetUserProfileGinRequest
 		// query
 		if err := ctx.BindQuery(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
+
 		// params
 		if err := ctx.BindUri(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
@@ -743,17 +519,7 @@ func _CompleteExampleService_GetUserProfile0_HTTP_Handler(srv CompleteExampleSer
 		// Convert gin request to protobuf request
 		in := ginReq.toGetUserProfileRequest()
 
-		// Custom field tags detected:
-
-		// Field UserId: binding:"required,uuid" json:"user_id" uri:"user_id"
-		// Field Sections: form:"sections" json:"sections"
-		// Field IncludeStats: form:"include_stats" json:"include_stats"
-		// Field IncludePosts: form:"include_posts" json:"include_posts"
-		// Field IncludeFollowers: form:"include_followers" json:"include_followers"
-		// Field ViewerContext: binding:"oneof=public friend follower self" form:"context" json:"viewer_context"
-		// Field ViewerId: header:"X-Viewer-ID" json:"viewer_id"
-		// Field AccessToken: header:"X-Access-Token" json:"access_token"
-		// header,ip等常用信息, form表单信息,包括上传文件
+		// Use new context for metadata passing, including request, writer and route params
 		newCtx := metadata.NewContext(ctx)
 		reply, err := srv.GetUserProfile(newCtx, in)
 		if err != nil {
@@ -769,16 +535,15 @@ func _CompleteExampleService_GetUserProfile1_HTTP_Handler(srv CompleteExampleSer
 		// Set operation for middleware
 		ctx.Set("operation", OperationCompleteExampleServiceGetUserProfile)
 
-		var ginReq getuserprofileGinRequest
+		var ginReq _GetUserProfileGinRequest
 		// query
 		if err := ctx.BindQuery(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
+
 		// params
 		if err := ctx.BindUri(&ginReq); err != nil {
-
 			ctx.Error(err)
 			return
 		}
@@ -786,17 +551,7 @@ func _CompleteExampleService_GetUserProfile1_HTTP_Handler(srv CompleteExampleSer
 		// Convert gin request to protobuf request
 		in := ginReq.toGetUserProfileRequest()
 
-		// Custom field tags detected:
-
-		// Field UserId: binding:"required,uuid" json:"user_id" uri:"user_id"
-		// Field Sections: form:"sections" json:"sections"
-		// Field IncludeStats: form:"include_stats" json:"include_stats"
-		// Field IncludePosts: form:"include_posts" json:"include_posts"
-		// Field IncludeFollowers: form:"include_followers" json:"include_followers"
-		// Field ViewerContext: binding:"oneof=public friend follower self" form:"context" json:"viewer_context"
-		// Field ViewerId: header:"X-Viewer-ID" json:"viewer_id"
-		// Field AccessToken: header:"X-Access-Token" json:"access_token"
-		// header,ip等常用信息, form表单信息,包括上传文件
+		// Use new context for metadata passing, including request, writer and route params
 		newCtx := metadata.NewContext(ctx)
 		reply, err := srv.GetUserProfile(newCtx, in)
 		if err != nil {
@@ -835,9 +590,9 @@ func NewCompleteExampleServiceHTTPClient(opts ...client.ClientOption) CompleteEx
 func (c *CompleteExampleServiceHTTPClientImpl) BatchDeleteUsers(ctx context.Context, in *BatchDeleteUsersRequest, opts ...client.CallOption) (*BatchDeleteUsersResponse, error) {
 	var out BatchDeleteUsersResponse
 
-	// 构建请求路径
+	// Build request path
 	path := "/api/v1/users"
-	// DELETE请求
+	// DELETE request
 	err := c.client.Invoke(ctx, "DELETE", path, nil, &out, opts...)
 
 	if err != nil {
@@ -849,11 +604,11 @@ func (c *CompleteExampleServiceHTTPClientImpl) BatchDeleteUsers(ctx context.Cont
 func (c *CompleteExampleServiceHTTPClientImpl) CreatePost(ctx context.Context, in *CreatePostRequest, opts ...client.CallOption) (*CreatePostResponse, error) {
 	var out CreatePostResponse
 
-	// 构建请求路径
+	// Build request path
 	path := "/api/v1/users/{user_id}/posts"
-	// 替换路径参数
+	// Replace path parameters
 	path = strings.ReplaceAll(path, "{user_id}", fmt.Sprintf("%v", in.UserId))
-	// POST请求
+	// POST request
 	err := c.client.Invoke(ctx, "POST", path, in, &out, opts...)
 
 	if err != nil {
@@ -865,9 +620,9 @@ func (c *CompleteExampleServiceHTTPClientImpl) CreatePost(ctx context.Context, i
 func (c *CompleteExampleServiceHTTPClientImpl) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...client.CallOption) (*CreateUserResponse, error) {
 	var out CreateUserResponse
 
-	// 构建请求路径
+	// Build request path
 	path := "/api/v1/users"
-	// POST请求
+	// POST request
 	err := c.client.Invoke(ctx, "POST", path, in, &out, opts...)
 
 	if err != nil {
@@ -879,11 +634,11 @@ func (c *CompleteExampleServiceHTTPClientImpl) CreateUser(ctx context.Context, i
 func (c *CompleteExampleServiceHTTPClientImpl) DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...client.CallOption) (*DeleteUserResponse, error) {
 	var out DeleteUserResponse
 
-	// 构建请求路径
+	// Build request path
 	path := "/api/v1/users/{user_id}"
-	// 替换路径参数
+	// Replace path parameters
 	path = strings.ReplaceAll(path, "{user_id}", fmt.Sprintf("%v", in.UserId))
-	// DELETE请求
+	// DELETE request
 	err := c.client.Invoke(ctx, "DELETE", path, nil, &out, opts...)
 
 	if err != nil {
@@ -895,12 +650,12 @@ func (c *CompleteExampleServiceHTTPClientImpl) DeleteUser(ctx context.Context, i
 func (c *CompleteExampleServiceHTTPClientImpl) GetPostComments(ctx context.Context, in *GetPostCommentsRequest, opts ...client.CallOption) (*GetPostCommentsResponse, error) {
 	var out GetPostCommentsResponse
 
-	// 构建请求路径
+	// Build request path
 	path := "/api/v1/users/{user_id}/posts/{post_id}/comments"
-	// 替换路径参数
+	// Replace path parameters
 	path = strings.ReplaceAll(path, "{user_id}", fmt.Sprintf("%v", in.UserId))
 	path = strings.ReplaceAll(path, "{post_id}", fmt.Sprintf("%v", in.PostId))
-	// GET请求
+	// GET request
 	err := c.client.Invoke(ctx, "GET", path, nil, &out, opts...)
 
 	if err != nil {
@@ -912,11 +667,11 @@ func (c *CompleteExampleServiceHTTPClientImpl) GetPostComments(ctx context.Conte
 func (c *CompleteExampleServiceHTTPClientImpl) GetUser(ctx context.Context, in *GetUserRequest, opts ...client.CallOption) (*GetUserResponse, error) {
 	var out GetUserResponse
 
-	// 构建请求路径
+	// Build request path
 	path := "/api/v1/users/{user_id}"
-	// 替换路径参数
+	// Replace path parameters
 	path = strings.ReplaceAll(path, "{user_id}", fmt.Sprintf("%v", in.UserId))
-	// GET请求
+	// GET request
 	err := c.client.Invoke(ctx, "GET", path, nil, &out, opts...)
 
 	if err != nil {
@@ -928,11 +683,11 @@ func (c *CompleteExampleServiceHTTPClientImpl) GetUser(ctx context.Context, in *
 func (c *CompleteExampleServiceHTTPClientImpl) GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...client.CallOption) (*GetUserProfileResponse, error) {
 	var out GetUserProfileResponse
 
-	// 构建请求路径
+	// Build request path
 	path := "/api/v1/users/{user_id}/profile"
-	// 替换路径参数
+	// Replace path parameters
 	path = strings.ReplaceAll(path, "{user_id}", fmt.Sprintf("%v", in.UserId))
-	// GET请求
+	// GET request
 	err := c.client.Invoke(ctx, "GET", path, nil, &out, opts...)
 
 	if err != nil {
@@ -944,9 +699,9 @@ func (c *CompleteExampleServiceHTTPClientImpl) GetUserProfile(ctx context.Contex
 func (c *CompleteExampleServiceHTTPClientImpl) ListUsers(ctx context.Context, in *ListUsersRequest, opts ...client.CallOption) (*ListUsersResponse, error) {
 	var out ListUsersResponse
 
-	// 构建请求路径
+	// Build request path
 	path := "/api/v1/users"
-	// GET请求
+	// GET request
 	err := c.client.Invoke(ctx, "GET", path, nil, &out, opts...)
 
 	if err != nil {
@@ -958,11 +713,11 @@ func (c *CompleteExampleServiceHTTPClientImpl) ListUsers(ctx context.Context, in
 func (c *CompleteExampleServiceHTTPClientImpl) PatchUser(ctx context.Context, in *PatchUserRequest, opts ...client.CallOption) (*PatchUserResponse, error) {
 	var out PatchUserResponse
 
-	// 构建请求路径
+	// Build request path
 	path := "/api/v1/users/{user_id}"
-	// 替换路径参数
+	// Replace path parameters
 	path = strings.ReplaceAll(path, "{user_id}", fmt.Sprintf("%v", in.UserId))
-	// PATCH请求
+	// PATCH request
 	err := c.client.Invoke(ctx, "PATCH", path, in, &out, opts...)
 
 	if err != nil {
@@ -974,9 +729,9 @@ func (c *CompleteExampleServiceHTTPClientImpl) PatchUser(ctx context.Context, in
 func (c *CompleteExampleServiceHTTPClientImpl) RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...client.CallOption) (*RegisterUserResponse, error) {
 	var out RegisterUserResponse
 
-	// 构建请求路径
+	// Build request path
 	path := "/api/v1/users/register"
-	// POST请求
+	// POST request
 	err := c.client.Invoke(ctx, "POST", path, in, &out, opts...)
 
 	if err != nil {
@@ -988,9 +743,9 @@ func (c *CompleteExampleServiceHTTPClientImpl) RegisterUser(ctx context.Context,
 func (c *CompleteExampleServiceHTTPClientImpl) SearchUsers(ctx context.Context, in *SearchUsersRequest, opts ...client.CallOption) (*SearchUsersResponse, error) {
 	var out SearchUsersResponse
 
-	// 构建请求路径
+	// Build request path
 	path := "/api/v1/users/search"
-	// GET请求
+	// GET request
 	err := c.client.Invoke(ctx, "GET", path, nil, &out, opts...)
 
 	if err != nil {
@@ -1002,11 +757,11 @@ func (c *CompleteExampleServiceHTTPClientImpl) SearchUsers(ctx context.Context, 
 func (c *CompleteExampleServiceHTTPClientImpl) UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...client.CallOption) (*UpdateProfileResponse, error) {
 	var out UpdateProfileResponse
 
-	// 构建请求路径
+	// Build request path
 	path := "/api/v1/users/{user_id}/profile"
-	// 替换路径参数
+	// Replace path parameters
 	path = strings.ReplaceAll(path, "{user_id}", fmt.Sprintf("%v", in.UserId))
-	// PUT请求
+	// PUT request
 	err := c.client.Invoke(ctx, "PUT", path, in.Profile, &out, opts...)
 
 	if err != nil {
@@ -1018,11 +773,11 @@ func (c *CompleteExampleServiceHTTPClientImpl) UpdateProfile(ctx context.Context
 func (c *CompleteExampleServiceHTTPClientImpl) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...client.CallOption) (*UpdateUserResponse, error) {
 	var out UpdateUserResponse
 
-	// 构建请求路径
+	// Build request path
 	path := "/api/v1/users/{user_id}"
-	// 替换路径参数
+	// Replace path parameters
 	path = strings.ReplaceAll(path, "{user_id}", fmt.Sprintf("%v", in.UserId))
-	// PUT请求
+	// PUT request
 	err := c.client.Invoke(ctx, "PUT", path, in, &out, opts...)
 
 	if err != nil {
@@ -1033,8 +788,8 @@ func (c *CompleteExampleServiceHTTPClientImpl) UpdateUser(ctx context.Context, i
 
 // Internal structs with gin binding tags for protobuf messages
 
-// batchdeleteusersGinRequest provides gin binding tags for BatchDeleteUsersRequest
-type batchdeleteusersGinRequest struct {
+// _BatchDeleteUsersGinRequest provides gin binding tags for BatchDeleteUsersRequest
+type _BatchDeleteUsersGinRequest struct {
 	UserIds           []string `json:"user_ids" form:"user_ids" binding:"required,min=1,max=100"`
 	HardDelete        bool     `json:"hard_delete" form:"hard_delete"`
 	DeleteReason      string   `json:"delete_reason" form:"reason"`
@@ -1044,7 +799,7 @@ type batchdeleteusersGinRequest struct {
 }
 
 // convertBatchDeleteUsersGinRequest converts from gin request struct to protobuf struct
-func (r *batchdeleteusersGinRequest) toBatchDeleteUsersRequest() *BatchDeleteUsersRequest {
+func (r *_BatchDeleteUsersGinRequest) toBatchDeleteUsersRequest() *BatchDeleteUsersRequest {
 	return &BatchDeleteUsersRequest{
 		UserIds:           r.UserIds,
 		HardDelete:        r.HardDelete,
@@ -1055,20 +810,8 @@ func (r *batchdeleteusersGinRequest) toBatchDeleteUsersRequest() *BatchDeleteUse
 	}
 }
 
-// fromBatchDeleteUsersRequest converts from protobuf struct to gin request struct
-func fromBatchDeleteUsersRequest(req *BatchDeleteUsersRequest) *batchdeleteusersGinRequest {
-	return &batchdeleteusersGinRequest{
-		UserIds:           req.UserIds,
-		HardDelete:        req.HardDelete,
-		DeleteReason:      req.DeleteReason,
-		BatchConfirmation: req.BatchConfirmation,
-		Authorization:     req.Authorization,
-		OperationId:       req.OperationId,
-	}
-}
-
-// createpostGinRequest provides gin binding tags for CreatePostRequest
-type createpostGinRequest struct {
+// _CreatePostGinRequest provides gin binding tags for CreatePostRequest
+type _CreatePostGinRequest struct {
 	UserId          string            `json:"user_id" uri:"user_id" binding:"required,uuid"`
 	Draft           bool              `json:"draft" form:"draft"`
 	Source          string            `json:"source" form:"source" binding:"oneof=web mobile app api"`
@@ -1096,7 +839,7 @@ type createpostGinRequest struct {
 }
 
 // convertCreatePostGinRequest converts from gin request struct to protobuf struct
-func (r *createpostGinRequest) toCreatePostRequest() *CreatePostRequest {
+func (r *_CreatePostGinRequest) toCreatePostRequest() *CreatePostRequest {
 	return &CreatePostRequest{
 		UserId:          r.UserId,
 		Draft:           r.Draft,
@@ -1125,38 +868,8 @@ func (r *createpostGinRequest) toCreatePostRequest() *CreatePostRequest {
 	}
 }
 
-// fromCreatePostRequest converts from protobuf struct to gin request struct
-func fromCreatePostRequest(req *CreatePostRequest) *createpostGinRequest {
-	return &createpostGinRequest{
-		UserId:          req.UserId,
-		Draft:           req.Draft,
-		Source:          req.Source,
-		NotifyFollowers: req.NotifyFollowers,
-		Authorization:   req.Authorization,
-		ContentType:     req.ContentType,
-		UserAgent:       req.UserAgent,
-		ClientVersion:   req.ClientVersion,
-		RequestId:       req.RequestId,
-		Title:           req.Title,
-		Content:         req.Content,
-		Excerpt:         req.Excerpt,
-		Category:        req.Category,
-		Tags:            req.Tags,
-		Visibility:      req.Visibility,
-		AllowComments:   req.AllowComments,
-		PublishAt:       req.PublishAt,
-		MetaTitle:       req.MetaTitle,
-		MetaDescription: req.MetaDescription,
-		SeoKeywords:     req.SeoKeywords,
-		ImageUrls:       req.ImageUrls,
-		AttachmentUrls:  req.AttachmentUrls,
-		CustomFields:    req.CustomFields,
-		ExternalId:      req.ExternalId,
-	}
-}
-
-// createuserGinRequest provides gin binding tags for CreateUserRequest
-type createuserGinRequest struct {
+// _CreateUserGinRequest provides gin binding tags for CreateUserRequest
+type _CreateUserGinRequest struct {
 	Username            string            `json:"username" binding:"required,min=3,max=50,alphanum"`
 	Email               string            `json:"email" binding:"required,email"`
 	Password            string            `json:"password" binding:"required,min=8,max=128"`
@@ -1178,7 +891,7 @@ type createuserGinRequest struct {
 }
 
 // convertCreateUserGinRequest converts from gin request struct to protobuf struct
-func (r *createuserGinRequest) toCreateUserRequest() *CreateUserRequest {
+func (r *_CreateUserGinRequest) toCreateUserRequest() *CreateUserRequest {
 	return &CreateUserRequest{
 		Username:            r.Username,
 		Email:               r.Email,
@@ -1201,32 +914,8 @@ func (r *createuserGinRequest) toCreateUserRequest() *CreateUserRequest {
 	}
 }
 
-// fromCreateUserRequest converts from protobuf struct to gin request struct
-func fromCreateUserRequest(req *CreateUserRequest) *createuserGinRequest {
-	return &createuserGinRequest{
-		Username:            req.Username,
-		Email:               req.Email,
-		Password:            req.Password,
-		FullName:            req.FullName,
-		Phone:               req.Phone,
-		Age:                 req.Age,
-		Gender:              req.Gender,
-		Bio:                 req.Bio,
-		Address:             req.Address,
-		Hobbies:             req.Hobbies,
-		Languages:           req.Languages,
-		SocialLinks:         req.SocialLinks,
-		Preferences:         req.Preferences,
-		Settings:            req.Settings,
-		AgreeTerms:          req.AgreeTerms,
-		SubscribeNewsletter: req.SubscribeNewsletter,
-		ReferralCode:        req.ReferralCode,
-		Tags:                req.Tags,
-	}
-}
-
-// deleteuserGinRequest provides gin binding tags for DeleteUserRequest
-type deleteuserGinRequest struct {
+// _DeleteUserGinRequest provides gin binding tags for DeleteUserRequest
+type _DeleteUserGinRequest struct {
 	UserId         string `json:"user_id" uri:"user_id" binding:"required,uuid"`
 	HardDelete     bool   `json:"hard_delete" form:"hard_delete"`
 	DeleteReason   string `json:"delete_reason" form:"reason" binding:"max=500"`
@@ -1238,7 +927,7 @@ type deleteuserGinRequest struct {
 }
 
 // convertDeleteUserGinRequest converts from gin request struct to protobuf struct
-func (r *deleteuserGinRequest) toDeleteUserRequest() *DeleteUserRequest {
+func (r *_DeleteUserGinRequest) toDeleteUserRequest() *DeleteUserRequest {
 	return &DeleteUserRequest{
 		UserId:         r.UserId,
 		HardDelete:     r.HardDelete,
@@ -1251,22 +940,8 @@ func (r *deleteuserGinRequest) toDeleteUserRequest() *DeleteUserRequest {
 	}
 }
 
-// fromDeleteUserRequest converts from protobuf struct to gin request struct
-func fromDeleteUserRequest(req *DeleteUserRequest) *deleteuserGinRequest {
-	return &deleteuserGinRequest{
-		UserId:         req.UserId,
-		HardDelete:     req.HardDelete,
-		DeleteReason:   req.DeleteReason,
-		TransferData:   req.TransferData,
-		TransferToUser: req.TransferToUser,
-		Confirmation:   req.Confirmation,
-		Authorization:  req.Authorization,
-		AdminToken:     req.AdminToken,
-	}
-}
-
-// getpostcommentsGinRequest provides gin binding tags for GetPostCommentsRequest
-type getpostcommentsGinRequest struct {
+// _GetPostCommentsGinRequest provides gin binding tags for GetPostCommentsRequest
+type _GetPostCommentsGinRequest struct {
 	UserId         string `json:"user_id" uri:"user_id" binding:"required,uuid"`
 	PostId         string `json:"post_id" uri:"post_id" binding:"required,uuid"`
 	Page           int32  `json:"page" form:"page" binding:"min=1"`
@@ -1283,7 +958,7 @@ type getpostcommentsGinRequest struct {
 }
 
 // convertGetPostCommentsGinRequest converts from gin request struct to protobuf struct
-func (r *getpostcommentsGinRequest) toGetPostCommentsRequest() *GetPostCommentsRequest {
+func (r *_GetPostCommentsGinRequest) toGetPostCommentsRequest() *GetPostCommentsRequest {
 	return &GetPostCommentsRequest{
 		UserId:         r.UserId,
 		PostId:         r.PostId,
@@ -1301,27 +976,8 @@ func (r *getpostcommentsGinRequest) toGetPostCommentsRequest() *GetPostCommentsR
 	}
 }
 
-// fromGetPostCommentsRequest converts from protobuf struct to gin request struct
-func fromGetPostCommentsRequest(req *GetPostCommentsRequest) *getpostcommentsGinRequest {
-	return &getpostcommentsGinRequest{
-		UserId:         req.UserId,
-		PostId:         req.PostId,
-		Page:           req.Page,
-		PerPage:        req.PerPage,
-		Sort:           req.Sort,
-		Order:          req.Order,
-		Status:         req.Status,
-		IncludeReplies: req.IncludeReplies,
-		IncludeHidden:  req.IncludeHidden,
-		Since:          req.Since,
-		Until:          req.Until,
-		UserContext:    req.UserContext,
-		ClientTimezone: req.ClientTimezone,
-	}
-}
-
-// getuserGinRequest provides gin binding tags for GetUserRequest
-type getuserGinRequest struct {
+// _GetUserGinRequest provides gin binding tags for GetUserRequest
+type _GetUserGinRequest struct {
 	UserId         string   `json:"user_id" uri:"user_id" binding:"required,uuid"`
 	Fields         []string `json:"fields" form:"fields"`
 	IncludeProfile bool     `json:"include_profile" form:"include_profile"`
@@ -1329,7 +985,7 @@ type getuserGinRequest struct {
 }
 
 // convertGetUserGinRequest converts from gin request struct to protobuf struct
-func (r *getuserGinRequest) toGetUserRequest() *GetUserRequest {
+func (r *_GetUserGinRequest) toGetUserRequest() *GetUserRequest {
 	return &GetUserRequest{
 		UserId:         r.UserId,
 		Fields:         r.Fields,
@@ -1338,18 +994,8 @@ func (r *getuserGinRequest) toGetUserRequest() *GetUserRequest {
 	}
 }
 
-// fromGetUserRequest converts from protobuf struct to gin request struct
-func fromGetUserRequest(req *GetUserRequest) *getuserGinRequest {
-	return &getuserGinRequest{
-		UserId:         req.UserId,
-		Fields:         req.Fields,
-		IncludeProfile: req.IncludeProfile,
-		IncludePosts:   req.IncludePosts,
-	}
-}
-
-// getuserprofileGinRequest provides gin binding tags for GetUserProfileRequest
-type getuserprofileGinRequest struct {
+// _GetUserProfileGinRequest provides gin binding tags for GetUserProfileRequest
+type _GetUserProfileGinRequest struct {
 	UserId           string   `json:"user_id" uri:"user_id" binding:"required,uuid"`
 	Sections         []string `json:"sections" form:"sections"`
 	IncludeStats     bool     `json:"include_stats" form:"include_stats"`
@@ -1361,7 +1007,7 @@ type getuserprofileGinRequest struct {
 }
 
 // convertGetUserProfileGinRequest converts from gin request struct to protobuf struct
-func (r *getuserprofileGinRequest) toGetUserProfileRequest() *GetUserProfileRequest {
+func (r *_GetUserProfileGinRequest) toGetUserProfileRequest() *GetUserProfileRequest {
 	return &GetUserProfileRequest{
 		UserId:           r.UserId,
 		Sections:         r.Sections,
@@ -1374,22 +1020,8 @@ func (r *getuserprofileGinRequest) toGetUserProfileRequest() *GetUserProfileRequ
 	}
 }
 
-// fromGetUserProfileRequest converts from protobuf struct to gin request struct
-func fromGetUserProfileRequest(req *GetUserProfileRequest) *getuserprofileGinRequest {
-	return &getuserprofileGinRequest{
-		UserId:           req.UserId,
-		Sections:         req.Sections,
-		IncludeStats:     req.IncludeStats,
-		IncludePosts:     req.IncludePosts,
-		IncludeFollowers: req.IncludeFollowers,
-		ViewerContext:    req.ViewerContext,
-		ViewerId:         req.ViewerId,
-		AccessToken:      req.AccessToken,
-	}
-}
-
-// listusersGinRequest provides gin binding tags for ListUsersRequest
-type listusersGinRequest struct {
+// _ListUsersGinRequest provides gin binding tags for ListUsersRequest
+type _ListUsersGinRequest struct {
 	Page           int32    `json:"page" form:"page" binding:"min=1"`
 	PageSize       int32    `json:"page_size" form:"page_size" binding:"min=1,max=100"`
 	SortBy         string   `json:"sort_by" form:"sort_by" binding:"oneof=id name email created_at"`
@@ -1403,7 +1035,7 @@ type listusersGinRequest struct {
 }
 
 // convertListUsersGinRequest converts from gin request struct to protobuf struct
-func (r *listusersGinRequest) toListUsersRequest() *ListUsersRequest {
+func (r *_ListUsersGinRequest) toListUsersRequest() *ListUsersRequest {
 	return &ListUsersRequest{
 		Page:           r.Page,
 		PageSize:       r.PageSize,
@@ -1418,24 +1050,8 @@ func (r *listusersGinRequest) toListUsersRequest() *ListUsersRequest {
 	}
 }
 
-// fromListUsersRequest converts from protobuf struct to gin request struct
-func fromListUsersRequest(req *ListUsersRequest) *listusersGinRequest {
-	return &listusersGinRequest{
-		Page:           req.Page,
-		PageSize:       req.PageSize,
-		SortBy:         req.SortBy,
-		SortOrder:      req.SortOrder,
-		Status:         req.Status,
-		Roles:          req.Roles,
-		IncludeDeleted: req.IncludeDeleted,
-		IncludeStats:   req.IncludeStats,
-		CreatedAfter:   req.CreatedAfter,
-		CreatedBefore:  req.CreatedBefore,
-	}
-}
-
-// patchuserGinRequest provides gin binding tags for PatchUserRequest
-type patchuserGinRequest struct {
+// _PatchUserGinRequest provides gin binding tags for PatchUserRequest
+type _PatchUserGinRequest struct {
 	UserId            string            `json:"user_id" uri:"user_id" binding:"required,uuid"`
 	IfMatch           string            `json:"if_match" header:"If-Match"`
 	IfUnmodifiedSince string            `json:"if_unmodified_since" header:"If-Unmodified-Since"`
@@ -1459,7 +1075,7 @@ type patchuserGinRequest struct {
 }
 
 // convertPatchUserGinRequest converts from gin request struct to protobuf struct
-func (r *patchuserGinRequest) toPatchUserRequest() *PatchUserRequest {
+func (r *_PatchUserGinRequest) toPatchUserRequest() *PatchUserRequest {
 	return &PatchUserRequest{
 		UserId:            r.UserId,
 		IfMatch:           r.IfMatch,
@@ -1484,34 +1100,8 @@ func (r *patchuserGinRequest) toPatchUserRequest() *PatchUserRequest {
 	}
 }
 
-// fromPatchUserRequest converts from protobuf struct to gin request struct
-func fromPatchUserRequest(req *PatchUserRequest) *patchuserGinRequest {
-	return &patchuserGinRequest{
-		UserId:            req.UserId,
-		IfMatch:           req.IfMatch,
-		IfUnmodifiedSince: req.IfUnmodifiedSince,
-		Authorization:     req.Authorization,
-		PatchSource:       req.PatchSource,
-		Username:          req.Username,
-		Email:             req.Email,
-		FullName:          req.FullName,
-		Phone:             req.Phone,
-		Bio:               req.Bio,
-		Status:            req.Status,
-		ProfilePatches:    req.ProfilePatches,
-		SettingsPatches:   req.SettingsPatches,
-		AddressPatches:    req.AddressPatches,
-		AddRoles:          req.AddRoles,
-		RemoveRoles:       req.RemoveRoles,
-		AddTags:           req.AddTags,
-		RemoveTags:        req.RemoveTags,
-		PatchReason:       req.PatchReason,
-		PatchMetadata:     req.PatchMetadata,
-	}
-}
-
-// registeruserGinRequest provides gin binding tags for RegisterUserRequest
-type registeruserGinRequest struct {
+// _RegisterUserGinRequest provides gin binding tags for RegisterUserRequest
+type _RegisterUserGinRequest struct {
 	Username            string   `json:"username" form:"username" binding:"required,min=3,max=30,alphanum"`
 	Email               string   `json:"email" form:"email" binding:"required,email"`
 	Password            string   `json:"password" form:"password" binding:"required,min=8"`
@@ -1536,7 +1126,7 @@ type registeruserGinRequest struct {
 }
 
 // convertRegisterUserGinRequest converts from gin request struct to protobuf struct
-func (r *registeruserGinRequest) toRegisterUserRequest() *RegisterUserRequest {
+func (r *_RegisterUserGinRequest) toRegisterUserRequest() *RegisterUserRequest {
 	return &RegisterUserRequest{
 		Username:            r.Username,
 		Email:               r.Email,
@@ -1562,35 +1152,8 @@ func (r *registeruserGinRequest) toRegisterUserRequest() *RegisterUserRequest {
 	}
 }
 
-// fromRegisterUserRequest converts from protobuf struct to gin request struct
-func fromRegisterUserRequest(req *RegisterUserRequest) *registeruserGinRequest {
-	return &registeruserGinRequest{
-		Username:            req.Username,
-		Email:               req.Email,
-		Password:            req.Password,
-		ConfirmPassword:     req.ConfirmPassword,
-		FirstName:           req.FirstName,
-		LastName:            req.LastName,
-		BirthDate:           req.BirthDate,
-		Phone:               req.Phone,
-		Gender:              req.Gender,
-		Country:             req.Country,
-		Timezone:            req.Timezone,
-		Interests:           req.Interests,
-		Skills:              req.Skills,
-		NewsletterFrequency: req.NewsletterFrequency,
-		MarketingEmails:     req.MarketingEmails,
-		CaptchaResponse:     req.CaptchaResponse,
-		InviteCode:          req.InviteCode,
-		UtmSource:           req.UtmSource,
-		UtmMedium:           req.UtmMedium,
-		UtmCampaign:         req.UtmCampaign,
-		ReferrerUrl:         req.ReferrerUrl,
-	}
-}
-
-// searchusersGinRequest provides gin binding tags for SearchUsersRequest
-type searchusersGinRequest struct {
+// _SearchUsersGinRequest provides gin binding tags for SearchUsersRequest
+type _SearchUsersGinRequest struct {
 	Query        string   `json:"query" form:"q" binding:"required,min=2,max=100"`
 	SearchFields []string `json:"search_fields" form:"search_fields"`
 	Limit        int32    `json:"limit" form:"limit" binding:"min=1,max=50"`
@@ -1608,7 +1171,7 @@ type searchusersGinRequest struct {
 }
 
 // convertSearchUsersGinRequest converts from gin request struct to protobuf struct
-func (r *searchusersGinRequest) toSearchUsersRequest() *SearchUsersRequest {
+func (r *_SearchUsersGinRequest) toSearchUsersRequest() *SearchUsersRequest {
 	return &SearchUsersRequest{
 		Query:        r.Query,
 		SearchFields: r.SearchFields,
@@ -1627,50 +1190,22 @@ func (r *searchusersGinRequest) toSearchUsersRequest() *SearchUsersRequest {
 	}
 }
 
-// fromSearchUsersRequest converts from protobuf struct to gin request struct
-func fromSearchUsersRequest(req *SearchUsersRequest) *searchusersGinRequest {
-	return &searchusersGinRequest{
-		Query:        req.Query,
-		SearchFields: req.SearchFields,
-		Limit:        req.Limit,
-		ClientId:     req.ClientId,
-		RequestId:    req.RequestId,
-		UserAgent:    req.UserAgent,
-		ApiKey:       req.ApiKey,
-		Latitude:     req.Latitude,
-		Longitude:    req.Longitude,
-		RadiusKm:     req.RadiusKm,
-		MinAge:       req.MinAge,
-		MaxAge:       req.MaxAge,
-		Country:      req.Country,
-		City:         req.City,
-	}
-}
-
-// updateprofileGinRequest provides gin binding tags for UpdateProfileRequest
-type updateprofileGinRequest struct {
+// _UpdateProfileGinRequest provides gin binding tags for UpdateProfileRequest
+type _UpdateProfileGinRequest struct {
 	UserId  string       `json:"user_id" uri:"user_id" binding:"required,uuid"`
 	Profile *UserProfile `json:"profile"`
 }
 
 // convertUpdateProfileGinRequest converts from gin request struct to protobuf struct
-func (r *updateprofileGinRequest) toUpdateProfileRequest() *UpdateProfileRequest {
+func (r *_UpdateProfileGinRequest) toUpdateProfileRequest() *UpdateProfileRequest {
 	return &UpdateProfileRequest{
 		UserId:  r.UserId,
 		Profile: r.Profile,
 	}
 }
 
-// fromUpdateProfileRequest converts from protobuf struct to gin request struct
-func fromUpdateProfileRequest(req *UpdateProfileRequest) *updateprofileGinRequest {
-	return &updateprofileGinRequest{
-		UserId:  req.UserId,
-		Profile: req.Profile,
-	}
-}
-
-// updateuserGinRequest provides gin binding tags for UpdateUserRequest
-type updateuserGinRequest struct {
+// _UpdateUserGinRequest provides gin binding tags for UpdateUserRequest
+type _UpdateUserGinRequest struct {
 	UserId           string            `json:"user_id" uri:"user_id" binding:"required,uuid"`
 	SendNotification bool              `json:"send_notification" form:"send_notification"`
 	UpdateReason     string            `json:"update_reason" form:"reason"`
@@ -1692,7 +1227,7 @@ type updateuserGinRequest struct {
 }
 
 // convertUpdateUserGinRequest converts from gin request struct to protobuf struct
-func (r *updateuserGinRequest) toUpdateUserRequest() *UpdateUserRequest {
+func (r *_UpdateUserGinRequest) toUpdateUserRequest() *UpdateUserRequest {
 	return &UpdateUserRequest{
 		UserId:           r.UserId,
 		SendNotification: r.SendNotification,
@@ -1712,29 +1247,5 @@ func (r *updateuserGinRequest) toUpdateUserRequest() *UpdateUserRequest {
 		Settings:         r.Settings,
 		UpdatedAt:        r.UpdatedAt,
 		Version:          r.Version,
-	}
-}
-
-// fromUpdateUserRequest converts from protobuf struct to gin request struct
-func fromUpdateUserRequest(req *UpdateUserRequest) *updateuserGinRequest {
-	return &updateuserGinRequest{
-		UserId:           req.UserId,
-		SendNotification: req.SendNotification,
-		UpdateReason:     req.UpdateReason,
-		IfMatch:          req.IfMatch,
-		Authorization:    req.Authorization,
-		Username:         req.Username,
-		Email:            req.Email,
-		FullName:         req.FullName,
-		Phone:            req.Phone,
-		Age:              req.Age,
-		Bio:              req.Bio,
-		Status:           req.Status,
-		Roles:            req.Roles,
-		Address:          req.Address,
-		SocialLinks:      req.SocialLinks,
-		Settings:         req.Settings,
-		UpdatedAt:        req.UpdatedAt,
-		Version:          req.Version,
 	}
 }
